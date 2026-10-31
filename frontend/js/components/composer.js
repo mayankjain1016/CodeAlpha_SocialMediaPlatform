@@ -3,7 +3,7 @@ import { getCurrentUser, isAuthenticated } from '../core/auth.js';
 import { renderAvatarHTML } from '../core/avatar.js';
 import { icons } from '../core/icons.js';
 import { showToast } from '../core/toast.js';
-import { openGuestModal } from '../core/modal.js';
+import { openGuestModal, openModal, closeModal } from '../core/modal.js';
 
 const HANDPICKED_EMOJIS = ['✨', '🚀', '💡', '🔥', '☕', '❤️', '🌊', '🌿', '🎨', '⚡', '💬', '🌸', '🙏', '🎯', '👏', '🤝', '☀️', '🌙'];
 
@@ -58,56 +58,93 @@ export const compressImageFile = (file) => {
   });
 };
 
-export const initComposer = (container, { onSuccess = null } = {}) => {
-  if (!container) return;
+/**
+ * Initialize Composer either in an inline container or as an overlay Modal
+ */
+export const initComposer = (containerOrOptions, maybeOptions = {}) => {
+  let container = null;
+  let options = {};
 
-  const user = getCurrentUser() || { name: 'You', username: 'guest', avatarHue: 175 };
+  if (containerOrOptions instanceof HTMLElement) {
+    container = containerOrOptions;
+    options = maybeOptions;
+  } else if (containerOrOptions && typeof containerOrOptions === 'object') {
+    options = containerOrOptions;
+  }
+
+  // If called without DOM container, open as a modal!
+  if (!container) {
+    if (!isAuthenticated()) {
+      openGuestModal('create a post');
+      return;
+    }
+
+    const modalContent = document.createElement('div');
+    modalContent.className = 'modal-composer-inner';
+    openModal('Create Post', modalContent);
+
+    renderComposerInContainer(modalContent, {
+      ...options,
+      onSuccess: (newPost) => {
+        closeModal();
+        if (options.onCreated) options.onCreated(newPost);
+        if (options.onSuccess) options.onSuccess(newPost);
+      }
+    });
+    return;
+  }
+
+  renderComposerInContainer(container, options);
+};
+
+const renderComposerInContainer = (container, options = {}) => {
+  const user = getCurrentUser() || { name: 'You', username: 'guest' };
   let selectedImageDataUrl = null;
   const MAX_CHARS = 280;
-  const CIRCUMFERENCE = 69.1; // 2 * PI * 11
+  const CIRCUMFERENCE = 69.1;
 
   container.innerHTML = `
-    <div class="composer-card">
-      <div class="composer-header">
+    <div class="composer-card" style="border: none; box-shadow: none; padding: 0;">
+      <div style="display: flex; gap: 12px; align-items: flex-start;">
         ${renderAvatarHTML(user, 'avatar-md')}
         <div style="flex: 1; min-width: 0;">
-          <textarea class="composer-textarea" placeholder="Where rivers meet... share a story, idea, or thought" maxlength="280" aria-label="Compose post text"></textarea>
+          <textarea class="composer-textarea form-textarea" placeholder="What's happening? Share a thought, link, or photo..." maxlength="280" rows="3" style="min-height: 80px; width: 100%; border: none; background: transparent; padding: 4px; font-size: var(--text-base);"></textarea>
         </div>
       </div>
 
-      <div class="composer-preview-wrap" style="display: none;">
-        <img class="composer-preview-img" src="" alt="Attached image preview">
-        <button class="composer-preview-remove" title="Remove image" aria-label="Remove image">
-          ${icons.x()}
+      <div class="composer-preview-wrap" style="display: none; position: relative; margin-top: 12px; border-radius: var(--rad-md); overflow: hidden; background: #000;">
+        <img class="composer-preview-img" src="" alt="Preview" style="max-height: 280px; width: 100%; object-fit: contain; display: block;" />
+        <button type="button" class="composer-preview-remove" style="position: absolute; top: 8px; right: 8px; background: rgba(0,0,0,0.7); border: none; color: #FFF; width: 28px; height: 28px; border-radius: var(--rad-full); cursor: pointer; display: flex; align-items: center; justify-content: center;">
+          &times;
         </button>
       </div>
 
-      <div class="composer-footer">
-        <div class="composer-tools">
-          <input type="file" class="composer-file-input" accept="image/jpeg,image/png,image/webp" style="display: none;" aria-label="Upload image">
-          <button type="button" class="btn-icon composer-img-btn" title="Add image" aria-label="Add image">
+      <div style="display: flex; align-items: center; justify-content: space-between; border-top: 1px solid var(--border-hairline); margin-top: 14px; padding-top: 12px;">
+        <div style="display: flex; align-items: center; gap: 6px;">
+          <input type="file" class="composer-file-input" accept="image/jpeg,image/png,image/webp" style="display: none;" />
+          <button type="button" class="btn-icon composer-img-btn" title="Add image" aria-label="Add image" style="color: #10B981;">
             ${icons.image()}
           </button>
           
           <div style="position: relative;">
-            <button type="button" class="btn-icon composer-emoji-btn" title="Add emoji" aria-label="Add emoji">
+            <button type="button" class="btn-icon composer-emoji-btn" title="Add emoji" aria-label="Add emoji" style="color: #FFA41B;">
               ${icons.smile()}
             </button>
-            <div class="emoji-popover" style="display: none;">
-              ${HANDPICKED_EMOJIS.map(em => `<button type="button" class="emoji-btn" data-emoji="${em}">${em}</button>`).join('')}
+            <div class="emoji-popover" style="display: none; position: absolute; bottom: calc(100% + 8px); left: 0; background: var(--bg-surface); border: 1px solid var(--border-hairline); border-radius: var(--rad-md); box-shadow: var(--shadow-floating); padding: 8px; grid-template-columns: repeat(6, 1fr); gap: 4px; z-index: 100; min-width: 200px;">
+              ${HANDPICKED_EMOJIS.map(em => `<button type="button" class="emoji-btn" data-emoji="${em}" style="background: none; border: none; font-size: 1.3rem; padding: 4px; cursor: pointer; border-radius: 4px;">${em}</button>`).join('')}
             </div>
           </div>
         </div>
 
-        <div class="composer-submit-group">
-          <div class="char-ring-wrap" title="Characters remaining">
-            <svg class="char-ring-svg" viewBox="0 0 28 28">
-              <circle class="char-ring-bg" cx="14" cy="14" r="11" fill="none" stroke-width="2.5"/>
-              <circle class="char-ring-progress" cx="14" cy="14" r="11" fill="none" stroke-width="2.5"
-                stroke-dasharray="${CIRCUMFERENCE}" stroke-dashoffset="${CIRCUMFERENCE}"/>
+        <div style="display: flex; align-items: center; gap: 12px;">
+          <div class="char-ring-wrap" title="Characters remaining" style="width: 24px; height: 24px;">
+            <svg viewBox="0 0 28 28" style="width: 100%; height: 100%; transform: rotate(-90deg);">
+              <circle cx="14" cy="14" r="11" fill="none" stroke="var(--border-hairline)" stroke-width="2.5"/>
+              <circle class="char-ring-progress" cx="14" cy="14" r="11" fill="none" stroke="var(--primary)" stroke-width="2.5"
+                stroke-dasharray="${CIRCUMFERENCE}" stroke-dashoffset="${CIRCUMFERENCE}" style="transition: stroke-dashoffset 0.15s;"/>
             </svg>
           </div>
-          <button class="btn btn-primary btn-compose" disabled>
+          <button type="button" class="btn btn-gradient btn-compose" disabled>
             <span>Post</span>
           </button>
         </div>
@@ -126,36 +163,28 @@ export const initComposer = (container, { onSuccess = null } = {}) => {
   const submitBtn = container.querySelector('.btn-compose');
   const ringProgress = container.querySelector('.char-ring-progress');
 
-  // Auto-grow textarea
-  const updateTextareaHeight = () => {
-    textarea.style.height = 'auto';
-    textarea.style.height = `${Math.min(textarea.scrollHeight, 320)}px`;
-  };
+  if (options.initialContent) {
+    textarea.value = options.initialContent;
+  }
 
-  // Update character progress ring and submit button state
   const updateState = () => {
     const len = textarea.value.length;
     const progress = Math.min(len / MAX_CHARS, 1);
     const offset = CIRCUMFERENCE * (1 - progress);
     ringProgress.style.strokeDashoffset = offset;
 
-    ringProgress.classList.remove('warn', 'danger');
-    if (len >= MAX_CHARS) {
-      ringProgress.classList.add('danger');
-    } else if (len >= 240) {
-      ringProgress.classList.add('warn');
-    }
-
     const hasContent = len > 0 || Boolean(selectedImageDataUrl);
     submitBtn.disabled = !hasContent;
   };
 
-  textarea.addEventListener('input', () => {
-    updateTextareaHeight();
-    updateState();
-  });
+  textarea.addEventListener('input', updateState);
+  updateState();
 
-  // Emoji Popover Toggle
+  if (options.focusPhoto) {
+    setTimeout(() => fileInput.click(), 100);
+  }
+
+  // Emoji Popover
   emojiBtn.onclick = (e) => {
     e.stopPropagation();
     const isVisible = emojiPopover.style.display === 'grid';
@@ -168,33 +197,23 @@ export const initComposer = (container, { onSuccess = null } = {}) => {
     }
   });
 
-  // Emoji Click
   emojiPopover.querySelectorAll('.emoji-btn').forEach(btn => {
     btn.onclick = (e) => {
       e.stopPropagation();
       const emoji = btn.dataset.emoji;
-      const start = textarea.selectionStart || textarea.value.length;
-      const end = textarea.selectionEnd || textarea.value.length;
-      const text = textarea.value;
-      textarea.value = text.substring(0, start) + emoji + text.substring(end);
+      textarea.value += emoji;
       textarea.focus();
-      textarea.selectionStart = textarea.selectionEnd = start + emoji.length;
       emojiPopover.style.display = 'none';
-      updateTextareaHeight();
       updateState();
     };
   });
 
-  // Attach Image trigger
   imgBtn.onclick = () => {
-    if (!isAuthenticated()) {
-      openGuestModal('attach photos');
-      return;
-    }
     fileInput.click();
   };
 
-  const handleSelectedFile = async (file) => {
+  fileInput.addEventListener('change', async (e) => {
+    const file = e.target.files[0];
     if (!file) return;
     try {
       imgBtn.disabled = true;
@@ -204,42 +223,13 @@ export const initComposer = (container, { onSuccess = null } = {}) => {
       previewWrap.style.display = 'block';
       updateState();
     } catch (err) {
-      showToast(err.message, 'error');
+      showToast(err.message);
     } finally {
       imgBtn.disabled = false;
       fileInput.value = '';
     }
-  };
-
-  fileInput.addEventListener('change', (e) => {
-    const file = e.target.files[0];
-    if (file) handleSelectedFile(file);
   });
 
-  // Drag and drop image onto composer
-  const composerCard = container.querySelector('.composer-card');
-  composerCard.addEventListener('dragover', (e) => {
-    e.preventDefault();
-    composerCard.style.outline = '2px dashed var(--accent-primary)';
-  });
-
-  composerCard.addEventListener('dragleave', () => {
-    composerCard.style.outline = '';
-  });
-
-  composerCard.addEventListener('drop', (e) => {
-    e.preventDefault();
-    composerCard.style.outline = '';
-    if (!isAuthenticated()) {
-      openGuestModal('attach photos');
-      return;
-    }
-    if (e.dataTransfer.files && e.dataTransfer.files[0]) {
-      handleSelectedFile(e.dataTransfer.files[0]);
-    }
-  });
-
-  // Remove attached image
   removeImgBtn.onclick = () => {
     selectedImageDataUrl = null;
     previewImg.src = '';
@@ -247,49 +237,30 @@ export const initComposer = (container, { onSuccess = null } = {}) => {
     updateState();
   };
 
-  // Submit Post with morphing button
   submitBtn.onclick = async () => {
-    if (!isAuthenticated()) {
-      openGuestModal('publish posts');
-      return;
-    }
-
     const text = textarea.value.trim();
     if (!text && !selectedImageDataUrl) return;
 
     submitBtn.disabled = true;
-    submitBtn.classList.add('loading');
-    submitBtn.innerHTML = '<span class="btn-spinner"></span>';
+    submitBtn.textContent = 'Posting...';
 
     try {
       let mediaId = null;
-
       if (selectedImageDataUrl) {
         const mediaRes = await api.post('/media', { dataUrl: selectedImageDataUrl });
         mediaId = mediaRes.id;
       }
 
       const res = await api.post('/posts', { text, mediaId });
+      showToast('Post published!');
 
-      // Reset form
-      textarea.value = '';
-      selectedImageDataUrl = null;
-      previewWrap.style.display = 'none';
-      previewImg.src = '';
-      updateTextareaHeight();
-      updateState();
-
-      showToast('Post published to Sangam!', 'success');
-
-      if (typeof onSuccess === 'function') {
-        onSuccess(res.post);
+      if (options.onSuccess) {
+        options.onSuccess(res.post);
       }
     } catch (err) {
-      showToast(err.message || 'Failed to publish post', 'error');
-    } finally {
-      submitBtn.classList.remove('loading');
-      submitBtn.innerHTML = '<span>Post</span>';
-      updateState();
+      showToast(err.message || 'Failed to post');
+      submitBtn.disabled = false;
+      submitBtn.textContent = 'Post';
     }
   };
 };

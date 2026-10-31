@@ -4,17 +4,16 @@ import { getCurrentUser, isAuthenticated } from '../core/auth.js';
 import { renderAvatarHTML } from '../core/avatar.js';
 import { renderPostCard } from '../components/postCard.js';
 import { renderCommentItem } from '../components/commentList.js';
-import { renderPostSkeleton, renderCommentSkeleton } from '../components/skeletons.js';
 import { openGuestModal } from '../core/modal.js';
 import { showToast } from '../core/toast.js';
 
 const postMount = document.getElementById('single-post-mount');
-const commentMount = document.getElementById('comments-section');
-const replyAvatar = document.getElementById('reply-avatar-mount');
-const commentForm = document.getElementById('comment-form');
-const commentInput = document.getElementById('comment-input');
-const submitCommentBtn = document.getElementById('submit-comment-btn');
+const commentMount = document.getElementById('comments-list-mount');
+const commentInput = document.getElementById('post-detail-comment-input');
+const submitBtn = document.getElementById('post-detail-comment-submit');
 const backBtn = document.getElementById('post-back-btn');
+const avatarMount = document.getElementById('comment-user-avatar');
+const countPill = document.getElementById('comments-count-pill');
 
 const getPostIdFromPath = () => {
   const parts = window.location.pathname.split('/');
@@ -24,17 +23,19 @@ const getPostIdFromPath = () => {
 export const initPostPage = async () => {
   renderAppShell('post');
 
-  backBtn.onclick = () => {
-    if (window.history.length > 1) {
-      window.history.back();
-    } else {
-      window.location.href = '/';
-    }
-  };
+  if (backBtn) {
+    backBtn.onclick = () => {
+      if (window.history.length > 1) {
+        window.history.back();
+      } else {
+        window.location.href = '/';
+      }
+    };
+  }
 
-  const currentUser = getCurrentUser() || { name: 'You', username: 'guest', avatarHue: 175 };
-  if (replyAvatar) {
-    replyAvatar.innerHTML = renderAvatarHTML(currentUser, 'avatar-md');
+  const currentUser = getCurrentUser();
+  if (avatarMount) {
+    avatarMount.innerHTML = currentUser ? renderAvatarHTML(currentUser, 'avatar-sm') : '<div class="avatar avatar-sm">?</div>';
   }
 
   const postId = getPostIdFromPath();
@@ -43,64 +44,53 @@ export const initPostPage = async () => {
     return;
   }
 
-  // Reply input auto-resize & enable submit
-  if (commentInput) {
+  if (commentInput && submitBtn) {
     commentInput.addEventListener('input', () => {
-      commentInput.style.height = 'auto';
-      commentInput.style.height = `${commentInput.scrollHeight}px`;
-      if (submitCommentBtn) submitCommentBtn.disabled = !commentInput.value.trim();
+      submitBtn.disabled = !commentInput.value.trim();
     });
-  }
 
-  if (commentForm) {
-    commentForm.onsubmit = async (e) => {
-      e.preventDefault();
-      if (!isAuthenticated()) {
-        openGuestModal('reply to conversations');
-        return;
-      }
-
+    submitBtn.addEventListener('click', async () => {
       const text = commentInput.value.trim();
       if (!text) return;
 
-      submitCommentBtn.disabled = true;
-      submitCommentBtn.textContent = 'Posting...';
+      if (!isAuthenticated()) {
+        openGuestModal('join the conversation with a comment');
+        return;
+      }
+
+      submitBtn.disabled = true;
+      submitBtn.textContent = 'Posting...';
 
       try {
         const res = await api.post(`/posts/${postId}/comments`, { text });
-
-        // Reset composer
         commentInput.value = '';
-        commentInput.style.height = 'auto';
 
-        // Optimistically insert new comment
+        // Prepend new comment
         const commentEl = renderCommentItem(res.comment);
-        commentEl.classList.add('animate-rise');
-        commentMount.prepend(commentEl);
-
-        // Update post comment counter in DOM
-        const replyCounter = postMount.querySelector('.action-reply .action-count');
-        if (replyCounter) {
-          const currentCount = parseInt(replyCounter.textContent, 10) || 0;
-          replyCounter.textContent = String(currentCount + 1);
+        if (commentMount) {
+          // If empty placeholder exists, clear it
+          const emptyPlaceholder = commentMount.querySelector('.empty-comments-text');
+          if (emptyPlaceholder) emptyPlaceholder.remove();
+          commentMount.prepend(commentEl);
         }
 
-        showToast('Reply published', 'success');
+        showToast('Comment posted!');
       } catch (err) {
-        showToast(err.message || 'Failed to post reply', 'error');
+        showToast(err.message || 'Failed to post comment');
       } finally {
-        submitCommentBtn.textContent = 'Reply';
-        submitCommentBtn.disabled = true;
+        submitBtn.textContent = 'Comment';
+        submitBtn.disabled = true;
       }
-    };
+    });
   }
 
   await loadPostAndComments(postId);
 };
 
 const loadPostAndComments = async (postId) => {
-  postMount.innerHTML = renderPostSkeleton();
-  commentMount.innerHTML = renderCommentSkeleton() + renderCommentSkeleton();
+  if (postMount) {
+    postMount.innerHTML = `<div style="text-align: center; padding: 24px; color: var(--text-muted); font-size: var(--text-xs);">Loading post...</div>`;
+  }
 
   try {
     const [postData, commentData] = await Promise.all([
@@ -108,50 +98,59 @@ const loadPostAndComments = async (postId) => {
       api.get(`/posts/${postId}/comments`)
     ]);
 
-    postMount.innerHTML = '';
-    const postCard = renderPostCard(postData.post, {
-      onPostDeleted: () => {
-        showToast('Post deleted', 'info');
-        setTimeout(() => {
-          window.location.href = '/';
-        }, 500);
-      }
-    });
-    postMount.appendChild(postCard);
-
-    // Comments
-    const comments = commentData.comments || [];
-    commentMount.innerHTML = '';
-
-    if (comments.length === 0) {
-      commentMount.innerHTML = `
-        <div style="padding: 36px 16px; text-align: center; color: var(--text-muted); font-size: 0.9rem;">
-          No replies yet. Be the first to add your perspective!
-        </div>
-      `;
-    } else {
-      comments.forEach(c => {
-        commentMount.appendChild(renderCommentItem(c, {
-          onDeleted: () => {
-            const replyCounter = postMount.querySelector('.action-reply .action-count');
-            if (replyCounter) {
-              const currentCount = parseInt(replyCounter.textContent, 10) || 1;
-              replyCounter.textContent = String(Math.max(0, currentCount - 1));
-            }
-          }
-        }));
+    if (postMount) {
+      postMount.innerHTML = '';
+      const postCard = renderPostCard(postData.post, {
+        onPostDeleted: () => {
+          showToast('Post deleted');
+          setTimeout(() => {
+            window.location.href = '/';
+          }, 300);
+        }
       });
+      postMount.appendChild(postCard);
+    }
+
+    const comments = commentData.comments || [];
+    if (countPill) {
+      countPill.textContent = `${comments.length} ${comments.length === 1 ? 'comment' : 'comments'}`;
+    }
+
+    if (commentMount) {
+      commentMount.innerHTML = '';
+      if (comments.length === 0) {
+        commentMount.innerHTML = `
+          <div class="empty-comments-text" style="padding: 24px 0; text-align: center; color: var(--text-muted); font-size: var(--text-xs);">
+            No comments yet. Be the first to share your perspective!
+          </div>
+        `;
+      } else {
+        comments.forEach(c => {
+          commentMount.appendChild(renderCommentItem(c, {
+            onDeleted: () => {
+              if (countPill) {
+                const count = commentMount.children.length;
+                countPill.textContent = `${count} ${count === 1 ? 'comment' : 'comments'}`;
+              }
+            }
+          }));
+        });
+      }
     }
   } catch (err) {
-    postMount.innerHTML = `
-      <div class="empty-state-card">
-        <h3 style="font-family: var(--font-display); font-size: 1.3rem; margin-bottom: 6px;">Post Not Found</h3>
-        <p style="color: var(--text-secondary); margin-bottom: 16px;">This post may have been deleted or the link is expired.</p>
-        <a href="/" class="btn btn-primary btn-sm">Return Home</a>
-      </div>
-    `;
-    commentMount.innerHTML = '';
+    if (postMount) {
+      postMount.innerHTML = `
+        <div style="background: var(--bg-surface); border: 1px solid var(--border-hairline); border-radius: var(--rad-lg); padding: 40px 20px; text-align: center;">
+          <h2 style="font-weight: 800; font-size: var(--text-base); margin-bottom: 6px;">Post Not Found</h2>
+          <p style="color: var(--text-muted); font-size: var(--text-xs); margin-bottom: 16px;">This post may have been removed or does not exist.</p>
+          <a href="/" class="btn btn-primary btn-sm">Return Home</a>
+        </div>
+      `;
+    }
   }
 };
 
-initPostPage();
+document.addEventListener('DOMContentLoaded', initPostPage);
+if (document.readyState === 'interactive' || document.readyState === 'complete') {
+  initPostPage();
+}

@@ -16,6 +16,7 @@ const commentRoutes = require('./routes/commentRoutes');
 const notificationRoutes = require('./routes/notificationRoutes');
 const trendingRoutes = require('./routes/trendingRoutes');
 const mediaRoutes = require('./routes/mediaRoutes');
+const storyRoutes = require('./routes/storyRoutes');
 
 const app = express();
 
@@ -82,6 +83,7 @@ app.use('/api/comments', commentRoutes);
 app.use('/api/notifications', notificationRoutes);
 app.use('/api/trending', trendingRoutes);
 app.use('/api/media', mediaRoutes);
+app.use('/api/stories', storyRoutes);
 
 // Helper to send HTML pages with no-cache headers
 const sendPage = (res, pageName, statusCode = 200) => {

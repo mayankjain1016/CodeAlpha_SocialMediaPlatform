@@ -124,7 +124,7 @@ async function smokeTest() {
       }
     });
 
-    // 6. Like post
+    // 6. Like post & Reactions
     await runStep('POST /api/posts/:id/like', async () => {
       const res = await fetch(`${baseUrl}/api/posts/${testPostId}/like`, {
         method: 'POST',
@@ -133,6 +133,22 @@ async function smokeTest() {
       const data = await res.json();
       if (res.status !== 200 || data.liked !== true || data.likesCount !== 1) {
         throw new Error(`Expected like toggle response, got ${res.status}: ${JSON.stringify(data)}`);
+      }
+    });
+
+    // 6b. Post Reaction
+    await runStep('POST /api/posts/:id/like with reaction type (love)', async () => {
+      const res = await fetch(`${baseUrl}/api/posts/${testPostId}/like`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          Authorization: `Bearer ${testUserToken}`,
+        },
+        body: JSON.stringify({ type: 'love' }),
+      });
+      const data = await res.json();
+      if (res.status !== 200 || data.myReaction !== 'love') {
+        throw new Error(`Expected reaction type 'love', got: ${JSON.stringify(data)}`);
       }
     });
 
@@ -202,7 +218,49 @@ async function smokeTest() {
       }
     });
 
-    // 12. Unauthorized request validation
+    // 12. Stories tests (Create, Get, View)
+    let testStoryId = null;
+    await runStep('POST /api/stories', async () => {
+      const res = await fetch(`${baseUrl}/api/stories`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          Authorization: `Bearer ${testUserToken}`,
+        },
+        body: JSON.stringify({
+          text: 'Smoke testing 24h stories feature on Sangam! 🚀',
+          backgroundColor: 'linear-gradient(135deg, #FF007A 0%, #FFA41B 100%)',
+        }),
+      });
+      const data = await res.json();
+      if (res.status !== 201 || !data.story || !data.story._id) {
+        throw new Error(`Expected 201 with story, got ${res.status}: ${JSON.stringify(data)}`);
+      }
+      testStoryId = data.story._id;
+    });
+
+    await runStep('GET /api/stories', async () => {
+      const res = await fetch(`${baseUrl}/api/stories`, {
+        headers: { Authorization: `Bearer ${testUserToken}` },
+      });
+      const data = await res.json();
+      if (res.status !== 200 || !Array.isArray(data.groups)) {
+        throw new Error(`Expected 200 with groups array, got ${res.status}`);
+      }
+    });
+
+    await runStep('POST /api/stories/:id/view', async () => {
+      const res = await fetch(`${baseUrl}/api/stories/${testStoryId}/view`, {
+        method: 'POST',
+        headers: { Authorization: `Bearer ${testUserToken}` },
+      });
+      const data = await res.json();
+      if (res.status !== 200 || data.viewed !== true) {
+        throw new Error(`Expected viewed: true, got ${res.status}`);
+      }
+    });
+
+    // 13. Unauthorized request validation
     await runStep('GET /api/posts/bookmarks without auth (Expect 401)', async () => {
       const res = await fetch(`${baseUrl}/api/posts/bookmarks`);
       if (res.status !== 401) {
@@ -210,7 +268,7 @@ async function smokeTest() {
       }
     });
 
-    // 13. Invalid input validation
+    // 14. Invalid input validation
     await runStep('POST /api/posts with empty body (Expect 400)', async () => {
       const res = await fetch(`${baseUrl}/api/posts`, {
         method: 'POST',
@@ -225,7 +283,7 @@ async function smokeTest() {
       }
     });
 
-    // 14. Delete post
+    // 15. Delete post
     await runStep('DELETE /api/posts/:id', async () => {
       const res = await fetch(`${baseUrl}/api/posts/${testPostId}`, {
         method: 'DELETE',
@@ -237,7 +295,7 @@ async function smokeTest() {
       }
     });
 
-    // 15. Verify deleted post returns 404
+    // 16. Verify deleted post returns 404
     await runStep('GET /api/posts/:id on deleted post (Expect 404)', async () => {
       const res = await fetch(`${baseUrl}/api/posts/${testPostId}`);
       if (res.status !== 404) {
@@ -245,7 +303,7 @@ async function smokeTest() {
       }
     });
 
-    console.log('\nALL SMOKE TESTS PASSED SUCCESSFULLY! (15/15)');
+    console.log('\nALL SMOKE TESTS PASSED SUCCESSFULLY! (19/19)');
     server.close();
     process.exit(0);
   } catch (err) {

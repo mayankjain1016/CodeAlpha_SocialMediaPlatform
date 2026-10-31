@@ -9,7 +9,7 @@ const { extractHashtagsAndMentions } = require('../utils/hashtags');
 const { isValidObjectId, sanitizeString } = require('../utils/validators');
 
 /**
- * Format post document for JSON response with author summary and user-specific flags
+ * Format post document for JSON response with author summary, reaction stats, and user-specific flags
  */
 const formatPost = (post, currentUserId = null, userBookmarks = new Set()) => {
   const author = post.author || {};
@@ -23,6 +23,36 @@ const formatPost = (post, currentUserId = null, userBookmarks = new Set()) => {
     ? userBookmarks.has(post._id.toString())
     : false;
 
+  // Compute reaction breakdown
+  const reactionSummary = {
+    like: 0,
+    love: 0,
+    haha: 0,
+    wow: 0,
+    sad: 0,
+  };
+
+  let myReaction = null;
+
+  if (Array.isArray(post.reactions)) {
+    post.reactions.forEach(r => {
+      const type = r.type || 'like';
+      if (reactionSummary[type] !== undefined) {
+        reactionSummary[type]++;
+      }
+      if (currentUserIdStr && r.user && (r.user._id || r.user).toString() === currentUserIdStr) {
+        myReaction = type;
+      }
+    });
+  }
+
+  // If user liked via legacy like without reaction record
+  if (isLiked && !myReaction) {
+    myReaction = 'like';
+  }
+
+  const totalReactions = Object.values(reactionSummary).reduce((a, b) => a + b, 0);
+
   return {
     _id: post._id,
     text: post.text,
@@ -31,6 +61,9 @@ const formatPost = (post, currentUserId = null, userBookmarks = new Set()) => {
     hashtags: post.hashtags || [],
     mentions: post.mentions || [],
     likesCount: post.likesCount !== undefined ? post.likesCount : (post.likes?.length || 0),
+    reactionSummary,
+    totalReactions: Math.max(totalReactions, post.likesCount || 0),
+    myReaction,
     commentsCount: post.commentsCount || 0,
     createdAt: post.createdAt,
     updatedAt: post.updatedAt,
@@ -41,7 +74,7 @@ const formatPost = (post, currentUserId = null, userBookmarks = new Set()) => {
       avatarHue: author.avatarHue,
       bannerPreset: author.bannerPreset,
     },
-    likedByMe: Boolean(isLiked),
+    likedByMe: Boolean(isLiked || myReaction),
     bookmarkedByMe: Boolean(isBookmarked),
   };
 };
@@ -94,32 +127,31 @@ const createPost = asyncHandler(async (req, res) => {
     mentions,
     likes: [],
     likesCount: 0,
+    reactions: [],
     commentsCount: 0,
   });
 
   // Handle mention notifications
   if (mentions.length > 0) {
-    const mentionedUsers = await User.find({
-      username: { $in: mentions },
-      _id: { $ne: req.user._id }, // Never notify yourself
-    }).select('_id');
-
-    if (mentionedUsers.length > 0) {
-      const notifs = mentionedUsers.map(u => ({
+    const mentionedUsers = await User.find({ username: { $in: mentions } }).select('_id');
+    const notifs = mentionedUsers
+      .filter(u => u._id.toString() !== req.user._id.toString())
+      .map(u => ({
         recipient: u._id,
         actor: req.user._id,
         type: 'mention',
         post: post._id,
       }));
+
+    if (notifs.length > 0) {
       await Notification.insertMany(notifs);
     }
   }
 
-  const populated = await Post.findById(post._id).populate('author', '_id name username avatarHue bannerPreset');
+  await post.populate('author', '_id name username avatarHue bannerPreset');
 
   res.status(201).json({
-    message: 'Post created successfully',
-    post: formatPost(populated, req.user._id, new Set()),
+    post: formatPost(post, req.user._id),
   });
 });
 
@@ -138,17 +170,12 @@ const deletePost = asyncHandler(async (req, res) => {
     throw ApiError.forbidden('You can only delete your own posts');
   }
 
-  // Delete associated media if present
-  if (post.media) {
-    await Media.findByIdAndDelete(post.media);
-  }
-
-  // Delete associated comments and notifications
+  // Delete attached comments, notifications, and remove from user bookmarks
   await Promise.all([
-    Post.findByIdAndDelete(id),
-    Comment.deleteMany({ post: id }),
-    Notification.deleteMany({ post: id }),
-    User.updateMany({ bookmarks: id }, { $pull: { bookmarks: id } }),
+    Comment.deleteMany({ post: post._id }),
+    Notification.deleteMany({ post: post._id }),
+    User.updateMany({ bookmarks: post._id }, { $pull: { bookmarks: post._id } }),
+    Post.findByIdAndDelete(post._id),
   ]);
 
   res.json({ message: 'Post deleted successfully' });
@@ -157,14 +184,20 @@ const deletePost = asyncHandler(async (req, res) => {
 const getFeed = asyncHandler(async (req, res) => {
   const currentUserId = req.user._id;
   const currentUser = await User.findById(currentUserId).select('following');
-  const feedAuthors = [...(currentUser.following || []), currentUserId];
+  const followingIds = (currentUser.following || []).map(id => id.toString());
+
+  // Show posts from authors followed AND author itself
+  const authorIds = [...followingIds, currentUserId.toString()];
 
   const limit = Math.min(parseInt(req.query.limit, 10) || 15, 30);
   const cursor = req.query.cursor;
+  const topic = req.query.topic || req.query.tag;
 
-  const query = {
-    author: { $in: feedAuthors },
-  };
+  const query = { author: { $in: authorIds } };
+
+  if (topic) {
+    query.hashtags = topic.replace(/^#/, '').toLowerCase();
+  }
 
   if (cursor && isValidObjectId(cursor)) {
     const cursorDoc = await Post.findById(cursor).select('createdAt');
@@ -195,11 +228,11 @@ const getFeed = asyncHandler(async (req, res) => {
 const getExplorePosts = asyncHandler(async (req, res) => {
   const limit = Math.min(parseInt(req.query.limit, 10) || 15, 30);
   const cursor = req.query.cursor;
-  const tag = req.query.tag ? sanitizeString(req.query.tag).toLowerCase() : null;
+  const tag = req.query.tag || req.query.topic;
 
   const query = {};
-  if (tag) {
-    query.hashtags = tag.replace(/^#/, '');
+  if (tag && tag !== 'all') {
+    query.hashtags = tag.replace(/^#/, '').toLowerCase();
   }
 
   if (cursor && isValidObjectId(cursor)) {
@@ -331,9 +364,15 @@ const getPostById = asyncHandler(async (req, res) => {
 const toggleLike = asyncHandler(async (req, res) => {
   const { id } = req.params;
   const currentUserId = req.user._id;
+  const reactionType = req.body.type || 'like';
 
   if (!isValidObjectId(id)) {
     throw ApiError.badRequest('Invalid post ID');
+  }
+
+  const validReactions = ['like', 'love', 'haha', 'wow', 'sad'];
+  if (!validReactions.includes(reactionType)) {
+    throw ApiError.badRequest('Invalid reaction type');
   }
 
   const post = await Post.findById(id);
@@ -341,25 +380,76 @@ const toggleLike = asyncHandler(async (req, res) => {
     throw ApiError.notFound('Post not found');
   }
 
-  const isLiked = post.likes.some(uId => uId.toString() === currentUserId.toString());
+  if (!post.reactions) post.reactions = [];
 
-  if (isLiked) {
-    // Unlike
-    post.likes = post.likes.filter(uId => uId.toString() !== currentUserId.toString());
-    post.likesCount = Math.max(0, post.likes.length);
-    await post.save();
+  const existingReactionIndex = post.reactions.findIndex(
+    r => r.user.toString() === currentUserId.toString()
+  );
+  const isLegacyLiked = post.likes.some(uId => uId.toString() === currentUserId.toString());
 
-    return res.json({
-      liked: false,
-      likesCount: post.likesCount,
-    });
+  if (existingReactionIndex >= 0) {
+    const existingType = post.reactions[existingReactionIndex].type;
+    if (existingType === reactionType && !req.body.changeOnly) {
+      // Toggle off / remove reaction
+      post.reactions.splice(existingReactionIndex, 1);
+      post.likes = post.likes.filter(uId => uId.toString() !== currentUserId.toString());
+      post.likesCount = Math.max(0, post.likes.length);
+      await post.save();
+
+      return res.json({
+        liked: false,
+        myReaction: null,
+        likesCount: post.likesCount,
+        reactionSummary: formatPost(post, currentUserId).reactionSummary,
+      });
+    } else {
+      // Change reaction type
+      post.reactions[existingReactionIndex].type = reactionType;
+      if (!isLegacyLiked) {
+        post.likes.push(currentUserId);
+        post.likesCount = post.likes.length;
+      }
+      await post.save();
+
+      return res.json({
+        liked: true,
+        myReaction: reactionType,
+        likesCount: post.likesCount,
+        reactionSummary: formatPost(post, currentUserId).reactionSummary,
+      });
+    }
+  } else if (isLegacyLiked) {
+    // If was liked previously, toggle off if same, or set new reaction
+    if (reactionType === 'like' && !req.body.changeOnly) {
+      post.likes = post.likes.filter(uId => uId.toString() !== currentUserId.toString());
+      post.likesCount = Math.max(0, post.likes.length);
+      await post.save();
+
+      return res.json({
+        liked: false,
+        myReaction: null,
+        likesCount: post.likesCount,
+        reactionSummary: formatPost(post, currentUserId).reactionSummary,
+      });
+    } else {
+      post.reactions.push({ user: currentUserId, type: reactionType });
+      await post.save();
+
+      return res.json({
+        liked: true,
+        myReaction: reactionType,
+        likesCount: post.likesCount,
+        reactionSummary: formatPost(post, currentUserId).reactionSummary,
+      });
+    }
   } else {
-    // Like
+    // New reaction / like
+    post.reactions.push({ user: currentUserId, type: reactionType });
     post.likes.push(currentUserId);
     post.likesCount = post.likes.length;
     await post.save();
 
-    // Create notification if not author
+    // Notification
     if (post.author.toString() !== currentUserId.toString()) {
       await Notification.create({
         recipient: post.author,
@@ -371,7 +461,9 @@ const toggleLike = asyncHandler(async (req, res) => {
 
     return res.json({
       liked: true,
+      myReaction: reactionType,
       likesCount: post.likesCount,
+      reactionSummary: formatPost(post, currentUserId).reactionSummary,
     });
   }
 });

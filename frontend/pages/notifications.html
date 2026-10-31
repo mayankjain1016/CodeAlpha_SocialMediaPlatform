@@ -3,14 +3,16 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Activity & Notifications / Sangam</title>
-  <meta name="description" content="View your latest interactions, likes, comments, and follower updates on Sangam.">
+  <title>Notifications &mdash; Sangam</title>
+  <meta name="description" content="View interactions, reactions, comments, and follower updates on Sangam.">
   <link rel="icon" type="image/svg+xml" href="/assets/favicon.svg">
 
+  <!-- Google Fonts -->
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-  <link href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,600;700;800&family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=Plus+Jakarta+Sans:wght@700;800&display=swap" rel="stylesheet">
 
+  <!-- CSS Stylesheets -->
   <link rel="stylesheet" href="/css/tokens.css">
   <link rel="stylesheet" href="/css/base.css">
   <link rel="stylesheet" href="/css/layout.css">
@@ -25,39 +27,35 @@
   </script>
 </head>
 <body>
-  <!-- Top Floating Pill Navbar -->
-  <header class="top-navbar" aria-label="Main Navigation"></header>
+  <!-- Topbar Header -->
+  <header class="app-topbar"></header>
 
-  <!-- Page Layout Container -->
-  <div class="page-container">
-    <div class="bento-grid">
-      <!-- Left Column Shortcuts -->
-      <aside class="col-left"></aside>
+  <!-- App Layout -->
+  <div class="app-layout">
+    <!-- Left Navigation Rail -->
+    <aside class="left-rail"></aside>
 
-      <!-- Center Focused Column -->
-      <main class="col-center" style="grid-column: span 6;">
-        <div style="display: flex; align-items: center; justify-content: space-between; margin-bottom: var(--space-5);">
-          <div>
-            <h1 style="font-family: var(--font-display); font-size: clamp(1.6rem, 2.8vw, 2.2rem); font-weight: 800; margin: 0 0 4px 0;">
-              Activity Stream
-            </h1>
-            <p style="color: var(--text-muted); font-size: 0.88rem; margin: 0;">Interactions, replies, and connections.</p>
-          </div>
-          <button type="button" class="btn btn-secondary btn-sm" id="mark-all-read-btn">
-            Mark all read
-          </button>
-        </div>
+    <!-- Center Feed -->
+    <main class="center-feed" id="main-content">
+      <div style="display: flex; align-items: center; justify-content: space-between; margin-bottom: var(--sp-3);">
+        <h1 style="font-family: var(--font-heading); font-size: var(--text-xl); font-weight: 800; color: var(--text-main); margin: 0;">
+          Notifications
+        </h1>
+        <button type="button" class="btn btn-secondary btn-sm" id="mark-all-read-btn">
+          Mark all as read
+        </button>
+      </div>
 
-        <section id="notif-stream" aria-label="Notifications stream"></section>
-      </main>
+      <!-- Notifications Panel -->
+      <section class="notifications-panel" id="notif-stream" aria-label="Notifications List"></section>
+    </main>
 
-      <!-- Right Column Bento Widgets -->
-      <aside class="col-right"></aside>
-    </div>
+    <!-- Right Rail -->
+    <aside class="right-rail"></aside>
   </div>
 
   <!-- Mobile Bottom Dock -->
-  <nav class="mobile-bottom-dock" aria-label="Mobile Navigation"></nav>
+  <nav class="bottom-navbar"></nav>
 
   <!-- Page JS Script -->
   <script type="module" src="/js/pages/notifications.js"></script>

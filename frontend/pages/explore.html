@@ -3,14 +3,16 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Explore Streams / Sangam</title>
-  <meta name="description" content="Discover trending stories, code insights, and creative streams across technology, culture, and startups on Sangam.">
+  <title>Explore &mdash; Discover Visuals & Ideas on Sangam</title>
+  <meta name="description" content="Discover photos, creative ideas, and trending topics across the Sangam community in a Pinterest-style masonry grid.">
   <link rel="icon" type="image/svg+xml" href="/assets/favicon.svg">
 
+  <!-- Google Fonts -->
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-  <link href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,600;700;800&family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=Plus+Jakarta+Sans:wght@700;800&display=swap" rel="stylesheet">
 
+  <!-- CSS Stylesheets -->
   <link rel="stylesheet" href="/css/tokens.css">
   <link rel="stylesheet" href="/css/base.css">
   <link rel="stylesheet" href="/css/layout.css">
@@ -25,65 +27,44 @@
   </script>
 </head>
 <body>
-  <!-- Top Floating Pill Navbar -->
-  <header class="top-navbar" aria-label="Main Navigation"></header>
+  <!-- Topbar Header -->
+  <header class="app-topbar"></header>
 
-  <!-- Page Layout Container -->
-  <div class="page-container">
-    <div class="bento-grid">
-      <!-- Left Column (Tablet/Desktop) -->
-      <aside class="col-left"></aside>
+  <!-- App Layout Grid -->
+  <div class="app-layout">
+    <!-- Left Navigation Rail -->
+    <aside class="left-rail"></aside>
 
-      <!-- Center & Right Combined for Rich Explore Experience -->
-      <main class="col-center" style="grid-column: span 6;">
-        <!-- Page Title & Big Search Input -->
-        <div style="margin-bottom: var(--space-4);">
-          <h1 style="font-family: var(--font-display); font-size: clamp(1.8rem, 3vw, 2.4rem); font-weight: 800; margin: 0 0 6px 0;">
-            Explore Streams
-          </h1>
-          <p style="color: var(--text-muted); font-size: 0.92rem; margin: 0 0 16px 0;">
-            Immerse yourself in ideas, stories, and visuals across the Sangam community.
-          </p>
+    <!-- Center Content (Wide for Masonry) -->
+    <main class="center-feed wide" id="main-content">
+      <!-- Explore Header -->
+      <div style="margin-bottom: var(--sp-2);">
+        <h1 style="font-family: var(--font-heading); font-size: var(--text-2xl); font-weight: 800; color: var(--text-main); margin-bottom: 4px;">
+          Explore
+        </h1>
+        <p style="font-size: var(--text-sm); color: var(--text-secondary); margin: 0 0 16px 0;">
+          Discover photos, stories, and ideas curated by the community.
+        </p>
 
-          <div style="position: relative;">
-            <div style="display: flex; align-items: center; gap: 12px; background: var(--bg-surface); border: 1px solid var(--hairline-strong); border-radius: var(--radius-full); padding: 8px 18px; box-shadow: var(--shadow-sm);">
-              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="20" height="20" style="color: var(--text-muted); flex-shrink: 0;"><circle cx="11" cy="11" r="8"/><path d="m21 21-4.3-4.3"/></svg>
-              <input type="text" id="explore-search-input" placeholder="Search people, topics, or #hashtags..." style="width: 100%; border: none; background: transparent; font-size: var(--text-base); color: var(--text-main);" autocomplete="off">
-              <button id="clear-search-btn" style="display: none; color: var(--text-muted);" aria-label="Clear search">&times;</button>
-            </div>
-            <!-- Quick People Search Results Dropdown -->
-            <div id="explore-people-results" style="display: none; position: absolute; top: calc(100% + 8px); left: 0; right: 0; background: var(--bg-surface); border-radius: var(--radius-lg); border: 1px solid var(--hairline-strong); box-shadow: var(--shadow-floating); z-index: 50; max-height: 280px; overflow-y: auto; padding: 6px;"></div>
-          </div>
-        </div>
+        <!-- Topic Chips Filter -->
+        <div id="explore-topics-mount"></div>
+      </div>
 
-        <!-- Topic Chips Row with Sliding Selection -->
-        <div class="topic-chips-scroll" id="topic-chips-container" role="tablist" aria-label="Topic filter chips">
-          <button class="topic-chip active" data-tag="all">✨ All Streams</button>
-          <button class="topic-chip" data-tag="tech">#tech</button>
-          <button class="topic-chip" data-tag="webdev">#webdev</button>
-          <button class="topic-chip" data-tag="startups">#startups</button>
-          <button class="topic-chip" data-tag="foodie">#foodie</button>
-          <button class="topic-chip" data-tag="cricket">#cricket</button>
-          <button class="topic-chip" data-tag="travel">#travel</button>
-          <button class="topic-chip" data-tag="design">#design</button>
-        </div>
+      <!-- Pinterest-style Masonry Grid -->
+      <section class="explore-masonry-grid" id="explore-masonry-container" aria-label="Explore Visuals"></section>
 
-        <!-- Explore Masonry Grid -->
-        <section class="explore-masonry" id="explore-masonry-stream" aria-label="Explore posts grid"></section>
+      <!-- Loading / End Sentinel -->
+      <div id="explore-loading" style="text-align: center; padding: 32px; color: var(--text-muted); font-size: var(--text-xs);">
+        Discovering more ideas...
+      </div>
+    </main>
 
-        <!-- Sentinel -->
-        <div id="explore-sentinel" style="padding: 32px; text-align: center; color: var(--text-muted); font-size: 0.85rem;">
-          <span class="btn-spinner" style="display: inline-block;"></span>
-        </div>
-      </main>
-
-      <!-- Right Column: Bento Widgets -->
-      <aside class="col-right"></aside>
-    </div>
+    <!-- Right Rail -->
+    <aside class="right-rail"></aside>
   </div>
 
   <!-- Mobile Bottom Dock -->
-  <nav class="mobile-bottom-dock" aria-label="Mobile Navigation"></nav>
+  <nav class="bottom-navbar"></nav>
 
   <!-- Page JS Script -->
   <script type="module" src="/js/pages/explore.js"></script>

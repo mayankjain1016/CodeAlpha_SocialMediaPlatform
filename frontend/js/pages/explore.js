@@ -1,266 +1,235 @@
 import { renderAppShell } from '../core/shell.js';
 import { api } from '../core/api.js';
 import { renderAvatarHTML } from '../core/avatar.js';
-import { icons } from '../core/icons.js';
-import { staggerEntrance } from '../core/motion.js';
-import { debounce, escapeHTML, linkify } from '../core/utils.js';
-import { openLightbox } from '../components/lightbox.js';
+import { renderTopicChips } from '../components/topicChips.js';
+import { openGuestModal, openModal, closeModal } from '../core/modal.js';
+import { showToast } from '../core/toast.js';
+import { isAuthenticated } from '../core/auth.js';
+import { escapeHTML, timeAgo } from '../core/utils.js';
 
-let activeTag = null;
+let currentTopic = '';
 let nextCursor = null;
 let isLoading = false;
 let hasReachedEnd = false;
 
-const masonryEl = document.getElementById('explore-masonry-stream');
-const sentinelEl = document.getElementById('explore-sentinel');
-const chipsContainer = document.getElementById('topic-chips-container');
-const searchInput = document.getElementById('explore-search-input');
-const clearSearchBtn = document.getElementById('clear-search-btn');
-const peopleResults = document.getElementById('explore-people-results');
+const masonryContainer = document.getElementById('explore-masonry-container');
+const loadingIndicator = document.getElementById('explore-loading');
 
 export const initExplorePage = async () => {
   renderAppShell('explore');
 
-  // Read URL query param ?tag=
+  // Check URL parameters
   const urlParams = new URLSearchParams(window.location.search);
-  const tagParam = urlParams.get('tag');
-  if (tagParam && tagParam !== 'all') {
-    activeTag = tagParam.replace(/^#/, '').toLowerCase();
-  }
+  currentTopic = urlParams.get('topic') || urlParams.get('tag') || '';
 
-  syncChipState();
-  setupListeners();
-  await loadExplorePosts(true);
-};
-
-const syncChipState = () => {
-  if (!chipsContainer) return;
-  const targetTag = activeTag || 'all';
-  chipsContainer.querySelectorAll('.topic-chip').forEach(btn => {
-    btn.classList.toggle('active', btn.dataset.tag === targetTag);
-  });
-};
-
-const setupListeners = () => {
-  // Topic Chip click
-  if (chipsContainer) {
-    chipsContainer.addEventListener('click', (e) => {
-      const chip = e.target.closest('.topic-chip');
-      if (!chip) return;
-      const tag = chip.dataset.tag;
-      if (tag === 'all') {
-        activeTag = null;
-        window.history.pushState({}, '', '/explore');
-      } else {
-        activeTag = tag;
-        window.history.pushState({}, '', `/explore?tag=${encodeURIComponent(tag)}`);
-      }
-      syncChipState();
-      loadExplorePosts(true);
+  // Render Topic Chips
+  const topicChipsMount = document.getElementById('explore-topics-mount');
+  if (topicChipsMount) {
+    renderTopicChips(topicChipsMount, currentTopic, (selected) => {
+      currentTopic = selected;
+      // Update URL without reload
+      const newUrl = selected ? `/explore?topic=${encodeURIComponent(selected)}` : '/explore';
+      window.history.pushState({}, '', newUrl);
+      refreshExplore();
     });
   }
 
-  // Clear search input button
-  if (clearSearchBtn && searchInput) {
-    clearSearchBtn.onclick = () => {
-      searchInput.value = '';
-      clearSearchBtn.style.display = 'none';
-      peopleResults.style.display = 'none';
-      peopleResults.innerHTML = '';
-      activeTag = null;
-      loadExplorePosts(true);
-    };
-  }
+  // Load Initial Explore Content
+  await refreshExplore();
 
-  // Search input handler (people + tag filtering)
-  const onSearch = debounce(async (query) => {
-    const trimmed = query.trim();
-    if (!trimmed) {
-      if (clearSearchBtn) clearSearchBtn.style.display = 'none';
-      if (peopleResults) {
-        peopleResults.style.display = 'none';
-        peopleResults.innerHTML = '';
-      }
-      return;
-    }
-
-    if (clearSearchBtn) clearSearchBtn.style.display = 'block';
-
-    // If starts with #, filter stream directly
-    if (trimmed.startsWith('#')) {
-      activeTag = trimmed.replace(/^#/, '').toLowerCase();
-      syncChipState();
-      loadExplorePosts(true);
-      return;
-    }
-
-    try {
-      const data = await api.get(`/users/search?q=${encodeURIComponent(trimmed)}`);
-      const users = data.users || [];
-      if (users.length > 0 && peopleResults) {
-        peopleResults.innerHTML = `
-          <div style="padding: 6px 12px; font-size: 0.75rem; font-weight: 700; text-transform: uppercase; color: var(--text-muted); letter-spacing: 0.05em;">People</div>
-          ${users.map(u => `
-            <a href="/u/${escapeHTML(u.username)}" style="display: flex; align-items: center; gap: 10px; padding: 8px 12px; border-radius: var(--radius-md); text-decoration: none; color: var(--text-main); transition: background var(--dur-fast) ease;" class="dropdown-item">
-              ${renderAvatarHTML(u, 'avatar-xs')}
-              <div>
-                <div style="font-weight: 700; font-size: 0.88rem;">${escapeHTML(u.name)}</div>
-                <div style="font-size: 0.75rem; color: var(--text-muted);">@${escapeHTML(u.username)}</div>
-              </div>
-            </a>
-          `).join('')}
-        `;
-        peopleResults.style.display = 'block';
-      } else if (peopleResults) {
-        peopleResults.style.display = 'none';
-      }
-    } catch (_) {
-      if (peopleResults) peopleResults.style.display = 'none';
-    }
-  }, 220);
-
-  if (searchInput) {
-    searchInput.addEventListener('input', (e) => onSearch(e.target.value));
-  }
-
-  // Infinite scroll
-  const observer = new IntersectionObserver((entries) => {
-    if (entries[0].isIntersecting && !isLoading && !hasReachedEnd) {
-      loadExplorePosts(false);
-    }
-  }, { rootMargin: '240px' });
-  if (sentinelEl) observer.observe(sentinelEl);
+  // Infinite Scroll Observer
+  setupInfiniteScroll();
 };
 
-const renderExploreTile = (post) => {
-  const tile = document.createElement('article');
-  tile.className = 'explore-tile spotlight-card';
-  tile.id = `explore-${post._id}`;
-
-  const author = post.author || { name: 'Anonymous', username: 'unknown', avatarHue: 175 };
-
-  if (post.image) {
-    tile.innerHTML = `
-      <div class="explore-tile-img-wrap">
-        <img src="${escapeHTML(post.image)}" alt="Explore post image" loading="lazy">
-        <div class="explore-tile-overlay">
-          <div style="display: flex; align-items: center; gap: 8px; margin-bottom: 8px;">
-            ${renderAvatarHTML(author, 'avatar-xs')}
-            <span style="font-weight: 700; font-size: 0.88rem; text-shadow: 0 1px 4px rgba(0,0,0,0.6);">${escapeHTML(author.name)}</span>
-          </div>
-          ${post.text ? `<p style="font-size: 0.84rem; line-height: 1.35; margin: 0 0 8px; display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden; opacity: 0.95;">${escapeHTML(post.text)}</p>` : ''}
-          <div style="display: flex; gap: 14px; font-size: 0.78rem; font-weight: 600;">
-            <span style="display: flex; align-items: center; gap: 4px;">${icons.heart()} ${post.likesCount || 0}</span>
-            <span style="display: flex; align-items: center; gap: 4px;">${icons.message()} ${post.commentsCount || 0}</span>
-          </div>
-        </div>
-      </div>
-    `;
-
-    const imgEl = tile.querySelector('img');
-    if (imgEl) {
-      imgEl.onclick = (e) => {
-        e.stopPropagation();
-        openLightbox(post.image, post.text || 'Sangam Explore Image');
-      };
-    }
-  } else {
-    tile.innerHTML = `
-      <div class="explore-tile-content">
-        <div style="display: flex; align-items: center; gap: 10px; margin-bottom: 12px;">
-          ${renderAvatarHTML(author, 'avatar-xs')}
-          <div style="min-width: 0;">
-            <div style="font-family: var(--font-display); font-weight: 700; font-size: 0.9rem; color: var(--text-main);">${escapeHTML(author.name)}</div>
-            <div style="font-size: 0.72rem; color: var(--text-muted);">@${escapeHTML(author.username)}</div>
-          </div>
-        </div>
-        <div style="font-size: 0.95rem; line-height: 1.55; color: var(--text-main); margin-bottom: 14px;">
-          ${linkify(post.text || '')}
-        </div>
-        <div style="display: flex; align-items: center; gap: 16px; font-size: 0.78rem; font-weight: 600; color: var(--text-muted); border-top: 1px solid var(--hairline); padding-top: 10px;">
-          <span style="display: flex; align-items: center; gap: 4px;">${icons.heart()} ${post.likesCount || 0}</span>
-          <span style="display: flex; align-items: center; gap: 4px;">${icons.message()} ${post.commentsCount || 0}</span>
-        </div>
-      </div>
-    `;
-  }
-
-  // Navigate to post detail when clicking tile
-  tile.onclick = (e) => {
-    if (e.target.closest('a, button, .explore-tile-img-wrap img')) return;
-    window.location.href = `/post/${post._id}`;
-  };
-
-  return tile;
+const refreshExplore = async () => {
+  nextCursor = null;
+  hasReachedEnd = false;
+  if (masonryContainer) masonryContainer.innerHTML = '';
+  await loadMoreExplore();
 };
 
-const loadExplorePosts = async (reset = false) => {
-  if (!masonryEl) return;
-  if (isLoading) return;
-  if (!reset && hasReachedEnd) return;
-
+const loadMoreExplore = async () => {
+  if (isLoading || hasReachedEnd) return;
   isLoading = true;
 
-  if (reset) {
-    nextCursor = null;
-    hasReachedEnd = false;
-    masonryEl.innerHTML = `
-      <div class="explore-tile skeleton" style="height: 240px;"></div>
-      <div class="explore-tile skeleton" style="height: 180px;"></div>
-      <div class="explore-tile skeleton" style="height: 300px;"></div>
-      <div class="explore-tile skeleton" style="height: 210px;"></div>
-    `;
-    if (sentinelEl) sentinelEl.style.display = 'block';
+  if (loadingIndicator) {
+    loadingIndicator.style.display = 'block';
+    loadingIndicator.textContent = 'Discovering more ideas...';
   }
 
   try {
-    let url = `/posts/explore?limit=12${nextCursor ? `&cursor=${nextCursor}` : ''}`;
-    if (activeTag) {
-      url += `&tag=${encodeURIComponent(activeTag)}`;
-    }
+    const params = new URLSearchParams();
+    params.set('limit', '12');
+    if (nextCursor) params.set('cursor', nextCursor);
+    if (currentTopic) params.set('topic', currentTopic);
 
-    const data = await api.get(url);
-    const items = data.items || [];
-    nextCursor = data.nextCursor;
+    const res = await api.get(`/posts/explore?${params.toString()}`);
+    const posts = res.posts || [];
+    nextCursor = res.nextCursor || null;
 
-    if (reset) masonryEl.innerHTML = '';
-
-    if (items.length === 0 && reset) {
-      masonryEl.innerHTML = `
-        <div class="empty-state-card" style="grid-column: 1 / -1; width: 100%; margin: 24px auto;">
-          <div class="empty-state-svg">${icons.compass()}</div>
-          <h3 style="font-family: var(--font-display); font-size: 1.25rem; font-weight: 800; margin: 0 0 6px 0;">No streams found</h3>
-          <p style="color: var(--text-secondary); max-width: 340px; margin: 0 auto; font-size: 0.9rem;">
-            ${activeTag ? `No conversations tagged #${escapeHTML(activeTag)} yet. Be the first to spark a topic!` : 'Explore streams are quiet right now.'}
-          </p>
+    if (posts.length === 0 && (!masonryContainer.children.length)) {
+      masonryContainer.innerHTML = `
+        <div style="grid-column: 1 / -1; padding: 48px 20px; text-align: center; color: var(--text-muted);">
+          <div style="font-size: 2.2rem; margin-bottom: 8px;">🎨</div>
+          <div style="font-weight: 700; font-size: var(--text-base); color: var(--text-main); margin-bottom: 4px;">Nothing here yet</div>
+          <div style="font-size: var(--text-xs);">Try exploring another topic or share your own thoughts!</div>
         </div>
       `;
-      if (sentinelEl) sentinelEl.style.display = 'none';
       hasReachedEnd = true;
+      if (loadingIndicator) loadingIndicator.style.display = 'none';
+      return;
+    }
+
+    posts.forEach(post => {
+      const card = createMasonryCard(post);
+      masonryContainer.appendChild(card);
+    });
+
+    if (!nextCursor || posts.length < 12) {
+      hasReachedEnd = true;
+      if (loadingIndicator) loadingIndicator.textContent = 'You have reached the end of the stream';
     } else {
-      const fragment = document.createDocumentFragment();
-      items.forEach(post => {
-        fragment.appendChild(renderExploreTile(post));
-      });
-      masonryEl.appendChild(fragment);
-
-      staggerEntrance(masonryEl, '.explore-tile');
-
-      if (!nextCursor) {
-        hasReachedEnd = true;
-        if (sentinelEl) sentinelEl.innerHTML = `<span style="color: var(--text-faint); font-size: 0.82rem;">You've reached the confluence of all streams</span>`;
-      } else {
-        if (sentinelEl) sentinelEl.innerHTML = `<span class="btn-spinner" style="display: inline-block;"></span>`;
-      }
+      if (loadingIndicator) loadingIndicator.style.display = 'none';
     }
+
   } catch (err) {
-    if (reset) {
-      masonryEl.innerHTML = `<div style="padding: 32px; text-align: center; color: var(--coral-500);"><p>${err.message}</p></div>`;
-    }
-    if (sentinelEl) sentinelEl.style.display = 'none';
+    console.error('Failed to load explore posts:', err);
+    if (loadingIndicator) loadingIndicator.textContent = 'Error loading explore. Tap to retry.';
   } finally {
     isLoading = false;
   }
 };
 
-initExplorePage();
+/**
+ * Create Pinterest-style Masonry Card
+ */
+const createMasonryCard = (post) => {
+  const card = document.createElement('article');
+  card.className = 'masonry-card';
+  card.id = `explore-${post._id}`;
+
+  const author = post.author || { name: 'Anonymous', username: 'unknown' };
+  const hasImage = Boolean(post.image);
+
+  card.innerHTML = `
+    ${hasImage ? `
+      <img src="${escapeHTML(post.image)}" alt="Explore image" class="masonry-card-img" loading="lazy" />
+    ` : `
+      <div style="padding: 24px; background: var(--grad-sunrise-soft); min-height: 140px; display: flex; flex-direction: column; justify-content: space-between;">
+        <p style="font-size: var(--text-base); font-weight: 600; line-height: 1.5; color: var(--text-main); margin: 0;">
+          ${escapeHTML(post.text || '')}
+        </p>
+      </div>
+    `}
+
+    <!-- Pinterest Hover Overlay -->
+    <div class="masonry-overlay">
+      <div class="masonry-top-actions">
+        <button type="button" class="btn-save-pinterest" aria-label="Save bookmark">
+          ${post.bookmarkedByMe ? 'Saved' : 'Save'}
+        </button>
+      </div>
+
+      <div class="masonry-bottom-info">
+        <div class="masonry-author-chip">
+          ${renderAvatarHTML(author, 'avatar-xs')}
+          <span style="overflow: hidden; text-overflow: ellipsis; white-space: nowrap; max-width: 120px;">
+            ${escapeHTML(author.name)}
+          </span>
+        </div>
+
+        <div class="masonry-stats-row">
+          <span>❤️ ${post.likesCount || 0}</span>
+          <span>💬 ${post.commentsCount || 0}</span>
+        </div>
+      </div>
+    </div>
+  `;
+
+  // Quick Save Button on Hover
+  const saveBtn = card.querySelector('.btn-save-pinterest');
+  if (saveBtn) {
+    saveBtn.addEventListener('click', async (e) => {
+      e.stopPropagation();
+      if (!isAuthenticated()) {
+        openGuestModal('save posts to your collection');
+        return;
+      }
+      try {
+        const res = await api.post(`/posts/${post._id}/bookmark`);
+        post.bookmarkedByMe = res.bookmarked;
+        saveBtn.textContent = res.bookmarked ? 'Saved' : 'Save';
+        showToast(res.bookmarked ? 'Saved to bookmarks' : 'Removed from bookmarks');
+      } catch (err) {
+        showToast(err.message || 'Failed to save');
+      }
+    });
+  }
+
+  // Click card to open Rich Detail Modal
+  card.addEventListener('click', () => {
+    openExploreDetailModal(post);
+  });
+
+  return card;
+};
+
+/**
+ * Open Pinterest-style rich modal viewer with details, comments, and related suggestions
+ */
+const openExploreDetailModal = async (post) => {
+  const content = document.createElement('div');
+  const author = post.author || { name: 'Anonymous', username: 'unknown' };
+
+  content.innerHTML = `
+    <div style="display: flex; flex-direction: column; gap: 16px;">
+      ${post.image ? `
+        <div style="width: 100%; border-radius: var(--rad-md); overflow: hidden; background: #000; max-height: 500px; display: flex; align-items: center; justify-content: center;">
+          <img src="${escapeHTML(post.image)}" alt="Full view" style="max-width: 100%; max-height: 500px; object-fit: contain;" />
+        </div>
+      ` : ''}
+
+      <div style="display: flex; align-items: center; justify-content: space-between; padding: 4px 0;">
+        <a href="/u/${escapeHTML(author.username)}" style="display: flex; align-items: center; gap: 10px; text-decoration: none; color: inherit;">
+          ${renderAvatarHTML(author, 'avatar-sm')}
+          <div>
+            <div style="font-weight: 700; font-size: var(--text-sm);">${escapeHTML(author.name)}</div>
+            <div style="font-size: var(--text-2xs); color: var(--text-muted);">@${escapeHTML(author.username)} &middot; ${timeAgo(post.createdAt)}</div>
+          </div>
+        </a>
+        <a href="/post/${post._id}" class="btn btn-primary btn-sm">Full Discussion ↗</a>
+      </div>
+
+      ${post.text ? `
+        <div style="font-size: var(--text-base); line-height: 1.5; color: var(--text-main);">
+          ${escapeHTML(post.text)}
+        </div>
+      ` : ''}
+
+      <!-- Stats strip -->
+      <div style="display: flex; gap: 16px; font-size: var(--text-xs); color: var(--text-secondary); border-top: 1px solid var(--border-hairline); padding-top: 12px;">
+        <span><strong>${post.likesCount || 0}</strong> reactions</span>
+        <span><strong>${post.commentsCount || 0}</strong> comments</span>
+      </div>
+    </div>
+  `;
+
+  openModal('Explore Discovery', content);
+};
+
+const setupInfiniteScroll = () => {
+  if (!loadingIndicator) return;
+
+  const observer = new IntersectionObserver((entries) => {
+    if (entries[0].isIntersecting && !isLoading && !hasReachedEnd) {
+      loadMoreExplore();
+    }
+  }, { rootMargin: '350px' });
+
+  observer.observe(loadingIndicator);
+};
+
+document.addEventListener('DOMContentLoaded', initExplorePage);
+if (document.readyState === 'interactive' || document.readyState === 'complete') {
+  initExplorePage();
+}

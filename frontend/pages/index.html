@@ -3,14 +3,14 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Sangam &mdash; Where conversations meet</title>
-  <meta name="description" content="Sangam is an editorial-meets-social platform for thinkers, builders, and storytellers. Connect, share ideas, and explore trending streams.">
+  <title>Sangam &mdash; Share Stories, Ideas & Conversations</title>
+  <meta name="description" content="Sangam is a modern 2026 social media platform blending stories, media streams, and vibrant creator communities.">
   <link rel="icon" type="image/svg+xml" href="/assets/favicon.svg">
 
-  <!-- Google Fonts Preconnect & Bricolage Grotesque + Inter -->
+  <!-- Google Fonts: Inter & Plus Jakarta Sans -->
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-  <link href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,600;700;800&family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=Plus+Jakarta+Sans:wght@700;800&display=swap" rel="stylesheet">
 
   <!-- CSS Stylesheets -->
   <link rel="stylesheet" href="/css/tokens.css">
@@ -28,16 +28,52 @@
   </script>
 </head>
 <body>
-  <!-- Floating Glass Pill Top Navbar -->
-  <header class="top-navbar" aria-label="Main Navigation"></header>
+  <!-- Topbar Header -->
+  <header class="app-topbar"></header>
 
-  <!-- Page Content Container -->
-  <div class="page-container" id="feed-page-root">
-    <!-- Dynamic Content mounted by feed.js (Guest Landing or Bento Home Feed) -->
+  <!-- Main 3-Column Social App Layout -->
+  <div class="app-layout">
+    <!-- Left Navigation Rail (Desktop) -->
+    <aside class="left-rail"></aside>
+
+    <!-- Center Feed Stream -->
+    <main class="center-feed" id="main-content">
+      <!-- 1. Instagram Stories Row -->
+      <section id="stories-mount" aria-label="Stories"></section>
+
+      <!-- 2. Facebook Create Post Card -->
+      <section id="create-post-mount" aria-label="Create Post"></section>
+
+      <!-- 3. YouTube Horizontal Topic Chips -->
+      <section id="topic-chips-mount" aria-label="Topics Filter"></section>
+
+      <!-- Feed Navigation Header (For You / Following Tabs) -->
+      <div class="feed-tabs-container" style="display: flex; border-bottom: 1px solid var(--border-hairline); background: var(--bg-surface); border-radius: var(--rad-md); overflow: hidden; margin-bottom: 4px;">
+        <button type="button" class="feed-tab-btn active" id="tab-for-you" style="flex: 1; padding: 14px; background: transparent; border: none; font-weight: 700; font-size: var(--text-sm); color: var(--text-main); cursor: pointer; position: relative;">
+          For you
+          <span class="tab-indicator" style="position: absolute; bottom: 0; left: 25%; right: 25%; height: 3px; background: var(--primary); border-radius: var(--rad-full);"></span>
+        </button>
+        <button type="button" class="feed-tab-btn" id="tab-following" style="flex: 1; padding: 14px; background: transparent; border: none; font-weight: 600; font-size: var(--text-sm); color: var(--text-muted); cursor: pointer; position: relative;">
+          Following
+          <span class="tab-indicator" style="display: none; position: absolute; bottom: 0; left: 25%; right: 25%; height: 3px; background: var(--primary); border-radius: var(--rad-full);"></span>
+        </button>
+      </div>
+
+      <!-- Feed Posts Stream -->
+      <div id="feed-stream" class="feed-posts-list" style="display: flex; flex-direction: column; gap: var(--sp-4);"></div>
+
+      <!-- Loading / End Indicator -->
+      <div id="feed-loading" style="text-align: center; padding: 24px; color: var(--text-muted); font-size: var(--text-xs);">
+        Loading conversations...
+      </div>
+    </main>
+
+    <!-- Right Rail (Trending & Creators) -->
+    <aside class="right-rail"></aside>
   </div>
 
-  <!-- Mobile Floating Pill Bottom Dock -->
-  <nav class="mobile-bottom-dock" aria-label="Mobile Navigation"></nav>
+  <!-- Mobile Bottom Dock -->
+  <nav class="bottom-navbar"></nav>
 
   <!-- Page Logic ES Module -->
   <script type="module" src="/js/pages/feed.js"></script>

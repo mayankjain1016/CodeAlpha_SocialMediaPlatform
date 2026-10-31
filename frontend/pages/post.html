@@ -3,14 +3,16 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Conversation / Sangam</title>
+  <title>Conversation &mdash; Sangam</title>
   <meta name="description" content="View post details and discussion thread on Sangam.">
   <link rel="icon" type="image/svg+xml" href="/assets/favicon.svg">
 
+  <!-- Google Fonts -->
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-  <link href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,600;700;800&family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=Plus+Jakarta+Sans:wght@700;800&display=swap" rel="stylesheet">
 
+  <!-- CSS Stylesheets -->
   <link rel="stylesheet" href="/css/tokens.css">
   <link rel="stylesheet" href="/css/base.css">
   <link rel="stylesheet" href="/css/layout.css">
@@ -25,57 +27,58 @@
   </script>
 </head>
 <body>
-  <!-- Top Floating Pill Navbar -->
-  <header class="top-navbar" aria-label="Main Navigation"></header>
+  <!-- Topbar Header -->
+  <header class="app-topbar"></header>
 
-  <!-- Page Layout Container -->
-  <div class="page-container">
-    <div class="bento-grid">
-      <!-- Left Column Shortcuts -->
-      <aside class="col-left"></aside>
+  <!-- App Layout -->
+  <div class="app-layout">
+    <!-- Left Navigation Rail -->
+    <aside class="left-rail"></aside>
 
-      <!-- Center Focused Column -->
-      <main class="col-center" style="grid-column: span 6;">
-        <!-- Top Back Navigation Header -->
-        <div style="display: flex; align-items: center; gap: 12px; margin-bottom: var(--space-4);">
-          <button type="button" class="btn-icon" id="post-back-btn" aria-label="Go back" style="background: var(--bg-surface); border: 1px solid var(--hairline);">
-            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="18" height="18"><path d="m12 19-7-7 7-7"/><path d="M19 12H5"/></svg>
-          </button>
-          <div>
-            <h1 style="font-family: var(--font-display); font-size: 1.4rem; font-weight: 800; margin: 0; line-height: 1.2;">Conversation</h1>
-            <span style="font-size: 0.75rem; color: var(--text-muted);">Thread discussion</span>
+    <!-- Center Content -->
+    <main class="center-feed" id="main-content">
+      <!-- Back Navigation Bar -->
+      <div style="display: flex; align-items: center; gap: 12px; margin-bottom: 4px;">
+        <button type="button" class="btn-icon" id="post-back-btn" aria-label="Go back">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="20" height="20">
+            <path d="m12 19-7-7 7-7"/><path d="M19 12H5"/>
+          </svg>
+        </button>
+        <span style="font-weight: 800; font-size: var(--text-base); color: var(--text-main);">Conversation</span>
+      </div>
+
+      <!-- Single Post Container -->
+      <div id="single-post-mount"></div>
+
+      <!-- Comments Section -->
+      <div class="widget-card" style="margin-top: var(--sp-4);">
+        <div class="widget-title">
+          <span>Comments</span>
+          <span id="comments-count-pill" style="font-size: var(--text-xs); color: var(--text-muted); font-weight: 500;"></span>
+        </div>
+
+        <!-- Add Comment Input Box -->
+        <div style="display: flex; gap: 10px; align-items: flex-start; padding: 12px 0; border-bottom: 1px solid var(--border-hairline);">
+          <div id="comment-user-avatar"></div>
+          <div style="flex: 1; display: flex; flex-direction: column; gap: 8px;">
+            <textarea id="post-detail-comment-input" class="form-textarea" placeholder="Write a comment..." rows="2" style="min-height: 54px;"></textarea>
+            <div style="display: flex; justify-content: flex-end;">
+              <button type="button" class="btn btn-primary btn-sm" id="post-detail-comment-submit" disabled>Comment</button>
+            </div>
           </div>
         </div>
 
-        <!-- Main Post Mount -->
-        <div id="single-post-mount" style="margin-bottom: var(--space-5);"></div>
+        <!-- Comments List Container -->
+        <div id="comments-list-mount" style="display: flex; flex-direction: column; gap: var(--sp-3); padding-top: 12px;"></div>
+      </div>
+    </main>
 
-        <!-- Reply / Comment Composer Card -->
-        <div class="composer-card" id="reply-composer-card" style="margin-bottom: var(--space-5);">
-          <form id="comment-form">
-            <div style="display: flex; gap: var(--space-3); align-items: flex-start;">
-              <div id="reply-avatar-mount" style="flex-shrink: 0;"></div>
-              <div style="flex: 1; min-width: 0;">
-                <textarea id="comment-input" class="composer-textarea" placeholder="Add your perspective to this confluence..." maxlength="280" rows="2" style="min-height: 56px;"></textarea>
-                <div style="display: flex; justify-content: flex-end; padding-top: 10px; border-top: 1px solid var(--hairline); margin-top: 8px;">
-                  <button type="submit" class="btn btn-primary btn-sm" id="submit-comment-btn" disabled>Reply</button>
-                </div>
-              </div>
-            </div>
-          </form>
-        </div>
-
-        <!-- Threaded Comments List -->
-        <div class="comment-thread-container" id="comments-section" aria-label="Comments discussion"></div>
-      </main>
-
-      <!-- Right Column Bento Widgets -->
-      <aside class="col-right"></aside>
-    </div>
+    <!-- Right Rail -->
+    <aside class="right-rail"></aside>
   </div>
 
   <!-- Mobile Bottom Dock -->
-  <nav class="mobile-bottom-dock" aria-label="Mobile Navigation"></nav>
+  <nav class="bottom-navbar"></nav>
 
   <!-- Page JS Script -->
   <script type="module" src="/js/pages/post.js"></script>

@@ -1,76 +1,54 @@
 /* =========================================
    ANIMATIONS & MOTION SYSTEM (60fps)
-   Delightful, Spring-physics & Tactile Depth
+   Spring physics, popping reactions, heart bursts, stories
    ========================================= */
 
-/* Keyframe Definitions */
 @keyframes spin {
   from { transform: rotate(0deg); }
   to { transform: rotate(360deg); }
 }
 
-@keyframes rotateGradientRing {
+@keyframes rotateStoryRing {
   0% { transform: rotate(0deg); }
   100% { transform: rotate(360deg); }
 }
 
-@keyframes drawUnderline {
-  0% { stroke-dashoffset: 300; opacity: 0; }
-  15% { opacity: 1; }
-  100% { stroke-dashoffset: 0; opacity: 1; }
-}
-
-@keyframes marqueeUp {
-  0% { transform: translateY(0); }
-  100% { transform: translateY(-50%); }
-}
-
-@keyframes marqueeDown {
-  0% { transform: translateY(-50%); }
-  100% { transform: translateY(0); }
-}
-
-@keyframes floatGentle {
-  0% { transform: translateY(0px) rotate(0deg); }
-  50% { transform: translateY(-8px) rotate(0.8deg); }
-  100% { transform: translateY(0px) rotate(0deg); }
-}
-
-@keyframes fadeRiseStagger {
-  from {
-    opacity: 0;
-    transform: translateY(16px);
-  }
-  to {
-    opacity: 1;
-    transform: translateY(0);
-  }
-}
-
-@keyframes heartSpring {
-  0% { transform: scale(1); }
-  30% { transform: scale(1.42); }
-  60% { transform: scale(0.88); }
-  100% { transform: scale(1); }
-}
-
-@keyframes heartBurstLarge {
+@keyframes doubleTapHeart {
   0% {
     opacity: 0;
     transform: translate(-50%, -50%) scale(0.3);
   }
-  50% {
+  30% {
     opacity: 0.95;
     transform: translate(-50%, -50%) scale(1.25);
   }
-  80% {
-    opacity: 0.8;
-    transform: translate(-50%, -50%) scale(1.1);
+  60% {
+    opacity: 0.9;
+    transform: translate(-50%, -50%) scale(1.05);
   }
   100% {
     opacity: 0;
-    transform: translate(-50%, -50%) scale(0.9) translateY(-20px);
+    transform: translate(-50%, -50%) scale(0.9) translateY(-18px);
   }
+}
+
+@keyframes popReactionEmoji {
+  0% { transform: scale(0.5) translateY(8px); opacity: 0; }
+  60% { transform: scale(1.25) translateY(-2px); opacity: 1; }
+  100% { transform: scale(1) translateY(0); opacity: 1; }
+}
+
+@keyframes heartSpring {
+  0% { transform: scale(1); }
+  35% { transform: scale(1.4); }
+  70% { transform: scale(0.88); }
+  100% { transform: scale(1); }
+}
+
+@keyframes bookmarkBounce {
+  0% { transform: scale(1); }
+  40% { transform: scale(1.28) translateY(-2px); }
+  100% { transform: scale(1) translateY(0); }
 }
 
 @keyframes particleBurst {
@@ -84,33 +62,45 @@
   }
 }
 
-@keyframes bookmarkBounce {
-  0% { transform: scale(1); }
-  45% { transform: scale(1.3) translateY(-3px); }
-  100% { transform: scale(1) translateY(0); }
-}
-
-@keyframes badgePop {
-  0% { transform: scale(0.5); }
-  60% { transform: scale(1.28); }
-  100% { transform: scale(1); }
-}
-
-@keyframes collapseCard {
+@keyframes slideDownFade {
   from {
-    max-height: 500px;
-    opacity: 1;
-    transform: scale(1);
-    margin-bottom: var(--space-5);
+    opacity: 0;
+    transform: translateY(-12px);
   }
   to {
-    max-height: 0;
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@keyframes slideUpFade {
+  from {
     opacity: 0;
-    transform: scale(0.92);
-    margin-bottom: 0;
-    padding-top: 0;
-    padding-bottom: 0;
-    overflow: hidden;
+    transform: translateY(16px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@keyframes scaleModalIn {
+  from {
+    opacity: 0;
+    transform: scale(0.94) translateY(8px);
+  }
+  to {
+    opacity: 1;
+    transform: scale(1) translateY(0);
+  }
+}
+
+@keyframes bottomSheetSlideUp {
+  from {
+    transform: translateY(100%);
+  }
+  to {
+    transform: translateY(0);
   }
 }
 
@@ -119,136 +109,17 @@
   100% { background-position: 200% 0; }
 }
 
-/* Staggered entrance class */
+@keyframes badgePop {
+  0% { transform: scale(0.5); }
+  60% { transform: scale(1.3); }
+  100% { transform: scale(1); }
+}
+
+/* Utilities */
 .animate-rise {
-  animation: fadeRiseStagger 0.4s var(--ease-out) backwards;
+  animation: slideUpFade 0.3s var(--ease-out) backwards;
 }
 
-/* Card collapsing class on deletion */
-.collapsing-card {
-  animation: collapseCard 0.35s var(--ease-out) forwards !important;
-}
-
-/* Spotlight Story Rotating Gradient Ring */
-.avatar-story-ring {
-  position: relative;
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-}
-
-.avatar-story-ring::before {
-  content: '';
-  position: absolute;
-  inset: -3.5px;
-  border-radius: var(--radius-full);
-  background: conic-gradient(from 0deg, var(--teal-500), var(--marigold-400), #FF5A5F, var(--teal-500));
-  animation: rotateGradientRing 8s linear infinite;
-  z-index: 0;
-}
-
-.avatar-story-ring .avatar-inner {
-  position: relative;
-  z-index: 1;
-  border: 3px solid var(--bg-surface);
-  border-radius: var(--radius-full);
-  background: var(--bg-surface);
-}
-
-/* Double-click / double-tap large heart overlay */
-.double-click-heart {
-  position: absolute;
-  top: 50%;
-  left: 50%;
-  width: 90px;
-  height: 90px;
-  color: var(--coral-500);
-  pointer-events: none;
-  z-index: 30;
-  animation: heartBurstLarge 0.8s var(--ease-spring) forwards;
-  filter: drop-shadow(0 4px 16px rgba(255, 90, 95, 0.45));
-}
-
-/* Like particles */
-.like-particle-container {
-  position: absolute;
-  top: 50%;
-  left: 50%;
-  width: 0;
-  height: 0;
-  pointer-events: none;
-}
-
-.like-particle {
-  position: absolute;
-  width: 5px;
-  height: 5px;
-  border-radius: 50%;
-  background: var(--coral-500);
-  animation: particleBurst 0.5s var(--ease-out) forwards;
-}
-
-/* Number roll transition */
-.count-roll {
-  display: inline-block;
-  transition: transform 0.22s var(--ease-spring), opacity 0.18s ease;
-}
-
-.count-roll.changing {
-  transform: translateY(-5px);
-  opacity: 0.3;
-}
-
-/* Badge pop utility */
 .badge-pop {
-  animation: badgePop 0.35s var(--ease-spring);
-}
-
-/* Desktop pointer-following card highlight glow */
-.spotlight-card {
-  position: relative;
-  overflow: hidden;
-}
-
-.spotlight-card::after {
-  content: '';
-  position: absolute;
-  inset: 0;
-  background: radial-gradient(380px circle at var(--mouse-x, -500px) var(--mouse-y, -500px), rgba(255, 164, 27, 0.08), transparent 70%);
-  pointer-events: none;
-  opacity: 0;
-  transition: opacity 0.3s ease;
-  z-index: 1;
-}
-
-.spotlight-card:hover::after {
-  opacity: 1;
-}
-
-/* Theme Circular Transition helper */
-.theme-transitioning,
-.theme-transitioning *,
-.theme-transitioning *::before,
-.theme-transitioning *::after {
-  transition: background-color 0.25s ease, color 0.2s ease, border-color 0.2s ease !important;
-}
-
-/* Reduced motion overrides */
-@media (prefers-reduced-motion: reduce) {
-  .avatar-story-ring::before {
-    animation: none;
-  }
-  .double-click-heart {
-    animation: none;
-    display: none;
-  }
-  .animate-rise {
-    animation: none;
-  }
-  .collapsing-card {
-    display: none;
-  }
-  .spotlight-card::after {
-    display: none;
-  }
+  animation: badgePop 0.32s var(--ease-spring);
 }
