@@ -1,0 +1,76 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Post / Sangam</title>
+  <meta name="description" content="View post details and discussion thread on Sangam.">
+  <link rel="icon" type="image/svg+xml" href="/assets/favicon.svg">
+
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Plus+Jakarta+Sans:wght@600;700;800&display=swap" rel="stylesheet">
+
+  <link rel="stylesheet" href="/css/tokens.css">
+  <link rel="stylesheet" href="/css/base.css">
+  <link rel="stylesheet" href="/css/layout.css">
+  <link rel="stylesheet" href="/css/components.css">
+  <link rel="stylesheet" href="/css/animations.css">
+
+  <script>
+    (function() {
+      const theme = localStorage.getItem('sangam_theme') || (window.matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light');
+      document.documentElement.setAttribute('data-theme', theme);
+    })();
+  </script>
+</head>
+<body>
+  <div class="app-shell">
+    <div class="shell-container">
+      <nav class="shell-nav" aria-label="Main Navigation"></nav>
+
+      <main class="shell-center" id="main-content">
+        <header class="mobile-top-bar"></header>
+
+        <header class="sticky-header">
+          <div class="header-title-wrap">
+            <button class="header-back-btn" id="post-back-btn" aria-label="Go back">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" width="20" height="20"><path d="m12 19-7-7 7-7"/><path d="M19 12H5"/></svg>
+            </button>
+            <h1 class="header-title">Post</h1>
+          </div>
+        </header>
+
+        <!-- Main Post Mount -->
+        <div id="single-post-mount">
+          <!-- Rendered by JS -->
+        </div>
+
+        <!-- Reply / Comment Composer -->
+        <section id="reply-composer-section" style="padding: 12px 16px; border-bottom: 1px solid var(--border-subtle); background: var(--bg-surface);">
+          <form id="comment-form" style="display: flex; gap: 12px; align-items: flex-start;">
+            <div id="reply-avatar-mount" style="flex-shrink: 0;"></div>
+            <div style="flex: 1; display: flex; flex-direction: column; gap: 8px;">
+              <textarea id="comment-input" class="composer-textarea" placeholder="Post your reply..." maxlength="280" rows="2" style="min-height: 48px;"></textarea>
+              <div style="display: flex; justify-content: flex-end;">
+                <button type="submit" class="btn btn-primary btn-sm" id="submit-comment-btn" disabled>Reply</button>
+              </div>
+            </div>
+          </form>
+        </section>
+
+        <!-- Comment List -->
+        <section id="comments-section" aria-label="Comments discussion">
+          <!-- Rendered by JS -->
+        </section>
+      </main>
+
+      <aside class="shell-sidebar" aria-label="Sidebar Widgets"></aside>
+    </div>
+  </div>
+
+  <nav class="mobile-bottom-bar" aria-label="Mobile Navigation"></nav>
+
+  <script type="module" src="/js/pages/post.js"></script>
+</body>
+</html>

@@ -1,0 +1,52 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Bookmarks / Sangam</title>
+  <meta name="description" content="View your saved posts and articles on Sangam.">
+  <link rel="icon" type="image/svg+xml" href="/assets/favicon.svg">
+
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Plus+Jakarta+Sans:wght@600;700;800&display=swap" rel="stylesheet">
+
+  <link rel="stylesheet" href="/css/tokens.css">
+  <link rel="stylesheet" href="/css/base.css">
+  <link rel="stylesheet" href="/css/layout.css">
+  <link rel="stylesheet" href="/css/components.css">
+  <link rel="stylesheet" href="/css/animations.css">
+
+  <script>
+    (function() {
+      const theme = localStorage.getItem('sangam_theme') || (window.matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light');
+      document.documentElement.setAttribute('data-theme', theme);
+    })();
+  </script>
+</head>
+<body>
+  <div class="app-shell">
+    <div class="shell-container">
+      <nav class="shell-nav" aria-label="Main Navigation"></nav>
+
+      <main class="shell-center" id="main-content">
+        <header class="mobile-top-bar"></header>
+
+        <header class="sticky-header">
+          <div class="header-title-wrap">
+            <h1 class="header-title">Bookmarks</h1>
+          </div>
+        </header>
+
+        <section id="bookmarks-stream" aria-label="Bookmarked posts"></section>
+      </main>
+
+      <aside class="shell-sidebar" aria-label="Sidebar Widgets"></aside>
+    </div>
+  </div>
+
+  <nav class="mobile-bottom-bar" aria-label="Mobile Navigation"></nav>
+
+  <script type="module" src="/js/pages/bookmarks.js"></script>
+</body>
+</html>

@@ -1,0 +1,157 @@
+/* Motion & Animation Utilities */
+
+/* Keyframes */
+@keyframes spin {
+  from { transform: rotate(0deg); }
+  to { transform: rotate(360deg); }
+}
+
+@keyframes shimmer {
+  0% { background-position: -200% 0; }
+  100% { background-position: 200% 0; }
+}
+
+@keyframes fadeRise {
+  from {
+    opacity: 0;
+    transform: translateY(12px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@keyframes heartSpring {
+  0% { transform: scale(1); }
+  35% { transform: scale(1.35); }
+  65% { transform: scale(0.9); }
+  100% { transform: scale(1); }
+}
+
+@keyframes particleBurst {
+  0% {
+    transform: translate(0, 0) scale(1);
+    opacity: 1;
+  }
+  100% {
+    transform: translate(var(--tx), var(--ty)) scale(0);
+    opacity: 0;
+  }
+}
+
+@keyframes bookmarkBounce {
+  0% { transform: scale(1); }
+  50% { transform: scale(1.25) translateY(-2px); }
+  100% { transform: scale(1) translateY(0); }
+}
+
+@keyframes badgePop {
+  0% { transform: scale(0.6); }
+  60% { transform: scale(1.25); }
+  100% { transform: scale(1); }
+}
+
+@keyframes slideDownIn {
+  from {
+    opacity: 0;
+    transform: translateY(-8px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@keyframes collapseCard {
+  from {
+    max-height: 500px;
+    opacity: 1;
+    transform: scale(1);
+    padding: var(--space-4);
+  }
+  to {
+    max-height: 0;
+    opacity: 0;
+    transform: scale(0.95);
+    padding: 0 var(--space-4);
+    margin: 0;
+    overflow: hidden;
+  }
+}
+
+/* Staggered card entrance */
+.animate-rise {
+  animation: fadeRise 0.35s var(--ease-out) backwards;
+}
+
+/* Like burst particles container */
+.like-particle-container {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  width: 0;
+  height: 0;
+  pointer-events: none;
+}
+
+.like-particle {
+  position: absolute;
+  width: 5px;
+  height: 5px;
+  border-radius: 50%;
+  background-color: var(--coral-500);
+  animation: particleBurst 0.5s var(--ease-out) forwards;
+}
+
+/* Count roll animation */
+.count-roll {
+  display: inline-block;
+  transition: transform 0.25s var(--ease-spring), opacity 0.2s ease;
+}
+
+.count-roll.changing {
+  transform: translateY(-4px);
+  opacity: 0.5;
+}
+
+/* Card removal collapse class */
+.collapsing-card {
+  animation: collapseCard 0.3s var(--ease-out) forwards !important;
+}
+
+/* Ripple effect on button click */
+.ripple {
+  position: absolute;
+  border-radius: 50%;
+  background: rgba(255, 255, 255, 0.4);
+  transform: scale(0);
+  animation: rippleAnim 0.6s linear;
+  pointer-events: none;
+}
+
+@keyframes rippleAnim {
+  to {
+    transform: scale(4);
+    opacity: 0;
+  }
+}
+
+/* Badge pop utility */
+.badge-pop {
+  animation: badgePop 0.3s var(--ease-spring);
+}
+
+/* Theme transition utility: applied only during manual theme toggle */
+.theme-transition,
+.theme-transition *,
+.theme-transition *::before,
+.theme-transition *::after {
+  transition: background-color 0.25s ease, border-color 0.25s ease, color 0.2s ease !important;
+}
+
+/* Sticky header elevation on scroll */
+.sticky-header.scrolled {
+  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.06);
+  border-bottom-color: var(--border-medium);
+}
