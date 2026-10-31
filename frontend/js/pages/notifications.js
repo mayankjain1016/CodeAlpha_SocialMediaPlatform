@@ -15,7 +15,11 @@ export const initNotificationsPage = async () => {
     if (streamEl) {
       streamEl.innerHTML = `
         <div style="padding: 48px 20px; text-align: center; color: var(--text-muted);">
-          <div style="font-size: 2.2rem; margin-bottom: 8px;">🔔</div>
+          <div style="margin-bottom: 12px; color: var(--text-muted); display: flex; justify-content: center;">
+            <svg class="icon icon-lg" width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round">
+              <path d="M6 8a6 6 0 0 1 12 0c0 7 3 9 3 9H3s3-2 3-9"/><path d="M10.3 21a1.94 1.94 0 0 0 3.4 0"/>
+            </svg>
+          </div>
           <h2 style="font-weight: 800; font-size: var(--text-base); color: var(--text-main); margin-bottom: 6px;">Sign in to view notifications</h2>
           <p style="font-size: var(--text-xs); margin-bottom: 16px;">Connect with creators and see who reacts to your stories and conversations.</p>
           <a href="/login" class="btn btn-primary btn-sm">Log In</a>
@@ -55,7 +59,11 @@ const loadNotifications = async () => {
     if (notifs.length === 0) {
       streamEl.innerHTML = `
         <div style="padding: 48px 20px; text-align: center; color: var(--text-muted);">
-          <div style="font-size: 2rem; margin-bottom: 8px;">✨</div>
+          <div style="margin-bottom: 12px; color: var(--text-muted); display: flex; justify-content: center;">
+            <svg class="icon icon-lg" width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round">
+              <polyline points="20 6 9 17 4 12"/>
+            </svg>
+          </div>
           <h2 style="font-weight: 800; font-size: var(--text-base); color: var(--text-main); margin-bottom: 6px;">All caught up!</h2>
           <p style="font-size: var(--text-xs);">No new notifications right now. Activity will appear here when people interact with you.</p>
         </div>

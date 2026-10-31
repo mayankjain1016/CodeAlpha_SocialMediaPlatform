@@ -145,7 +145,7 @@ export const renderPostCard = (post, { onPostDeleted = null } = {}) => {
 
     <!-- Inline Comment Input Row (Instagram Style) -->
     <div class="post-inline-comment">
-      ${getCurrentUser() ? renderAvatarHTML(getCurrentUser(), 'avatar-xs') : '<div class="avatar avatar-xs">?</div>'}
+      ${renderAvatarHTML(getCurrentUser(), 'avatar-xs')}
       <input type="text" class="inline-comment-input" placeholder="Add a comment..." aria-label="Add a comment" />
       <button type="button" class="inline-comment-submit">Post</button>
     </div>

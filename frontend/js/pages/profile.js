@@ -170,7 +170,7 @@ const renderProfileHero = (user) => {
 const loadUserPosts = async (username) => {
   try {
     const res = await api.get(`/users/${encodeURIComponent(username)}/posts`);
-    profilePosts = res.posts || [];
+    profilePosts = res.posts || res.items || [];
 
     // Update posts count
     const postsCountEl = heroMount ? heroMount.querySelector('#stat-posts-count') : null;
@@ -195,7 +195,11 @@ const renderPhotoGrid = (posts) => {
   if (mediaPosts.length === 0) {
     photoGridEl.innerHTML = `
       <div style="grid-column: 1 / -1; padding: 40px 20px; text-align: center; color: var(--text-muted);">
-        <div style="font-size: 2rem; margin-bottom: 8px;">📷</div>
+        <div style="margin-bottom: 12px; color: var(--text-muted); display: flex; justify-content: center;">
+          <svg class="icon icon-lg" width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round">
+            <rect width="18" height="18" x="3" y="3" rx="2" ry="2"/><circle cx="9" cy="9" r="2"/><path d="m21 15-3.086-3.086a2 2 0 0 0-2.828 0L6 21"/>
+          </svg>
+        </div>
         <div style="font-weight: 700; color: var(--text-main); font-size: var(--text-sm);">No Photos Yet</div>
         <div style="font-size: var(--text-xs);">When this creator shares photos, they will appear here.</div>
       </div>
@@ -229,7 +233,11 @@ const renderFeedList = (posts) => {
   if (posts.length === 0) {
     feedStreamEl.innerHTML = `
       <div style="padding: 40px 20px; text-align: center; color: var(--text-muted); background: var(--bg-surface); border-radius: var(--rad-lg); border: 1px solid var(--border-hairline);">
-        <div style="font-size: 2rem; margin-bottom: 8px;">💬</div>
+        <div style="margin-bottom: 12px; color: var(--text-muted); display: flex; justify-content: center;">
+          <svg class="icon icon-lg" width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round">
+            <path d="M7.9 20A9 9 0 1 0 4 16.1L2 22Z"/>
+          </svg>
+        </div>
         <div style="font-weight: 700; color: var(--text-main); font-size: var(--text-sm);">No Conversations Yet</div>
       </div>
     `;

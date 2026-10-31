@@ -221,6 +221,7 @@ const getFeed = asyncHandler(async (req, res) => {
 
   res.json({
     items: formattedItems,
+    posts: formattedItems,
     nextCursor,
   });
 });
@@ -258,6 +259,7 @@ const getExplorePosts = asyncHandler(async (req, res) => {
 
   res.json({
     items: formattedItems,
+    posts: formattedItems,
     nextCursor,
   });
 });
@@ -301,6 +303,7 @@ const getUserPosts = asyncHandler(async (req, res) => {
 
   res.json({
     items: formattedItems,
+    posts: formattedItems,
     nextCursor,
   });
 });
@@ -338,6 +341,7 @@ const getBookmarks = asyncHandler(async (req, res) => {
 
   res.json({
     items: formattedItems,
+    posts: formattedItems,
     nextCursor,
   });
 });

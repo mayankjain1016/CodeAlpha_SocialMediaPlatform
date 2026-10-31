@@ -138,13 +138,17 @@ const loadMorePosts = async () => {
     if (currentTopic) params.set('topic', currentTopic);
 
     const res = await api.get(`${endpoint}?${params.toString()}`);
-    const posts = res.posts || [];
+    const posts = res.posts || res.items || [];
     nextCursor = res.nextCursor || null;
 
     if (posts.length === 0 && (!feedStreamEl.children.length)) {
       feedStreamEl.innerHTML = `
         <div style="background: var(--bg-surface); border: 1px solid var(--border-hairline); border-radius: var(--rad-lg); padding: 40px 20px; text-align: center; color: var(--text-muted);">
-          <div style="font-size: 2rem; margin-bottom: 8px;">✨</div>
+          <div style="margin-bottom: 12px; color: var(--text-muted); display: flex; justify-content: center;">
+            <svg class="icon icon-lg" width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round">
+              <path d="m12 3-1.912 5.813a2 2 0 0 1-1.275 1.275L3 12l5.813 1.912a2 2 0 0 1 1.275 1.275L12 21l1.912-5.813a2 2 0 0 1 1.275-1.275L21 12l-5.813-1.912a2 2 0 0 1-1.275-1.275L12 3Z"/>
+            </svg>
+          </div>
           <div style="font-weight: 700; font-size: var(--text-base); color: var(--text-main); margin-bottom: 4px;">No posts found</div>
           <div style="font-size: var(--text-xs);">
             ${currentTopic ? `No conversations tagged with #${currentTopic} yet.` : 'Be the first to share a thought with the community!'}

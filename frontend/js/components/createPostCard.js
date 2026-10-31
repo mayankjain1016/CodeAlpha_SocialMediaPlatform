@@ -19,7 +19,7 @@ export const renderCreatePostCard = (containerEl, onPostCreated) => {
   const html = `
     <div class="create-post-card">
       <div class="create-post-top">
-        ${user ? renderAvatarHTML(user, 'avatar-md') : '<div class="avatar avatar-md">?</div>'}
+        ${renderAvatarHTML(user, 'avatar-md')}
         <button class="create-post-prompt-btn" id="feed-composer-prompt">
           What's on your mind${firstName ? `, ${escapeHTML(firstName)}` : ''}?
         </button>
@@ -27,15 +27,15 @@ export const renderCreatePostCard = (containerEl, onPostCreated) => {
 
       <div class="create-post-actions">
         <button class="create-action-chip" id="action-chip-photo">
-          <span class="chip-icon-photo">${icons.image('nav-icon')}</span>
+          <span class="chip-icon-photo">${icons.image('icon-sm')}</span>
           <span>Photo</span>
         </button>
         <button class="create-action-chip" id="action-chip-story">
-          <span class="chip-icon-story">✨</span>
+          <span class="chip-icon-story">${icons.story('icon-sm')}</span>
           <span>Story</span>
         </button>
         <button class="create-action-chip" id="action-chip-tag">
-          <span class="chip-icon-tag">#</span>
+          <span class="chip-icon-tag" style="font-weight: 700; font-size: 14px;">#</span>
           <span>Topic</span>
         </button>
       </div>

@@ -43,7 +43,7 @@ export const renderStoriesRow = async (containerEl) => {
           <button class="story-circle-item" id="your-story-btn" aria-label="Add or view your story">
             <div class="story-circle-wrap ${yourStoryGroup ? (yourStoryGroup.hasUnseen ? 'story-ring-unseen' : 'story-ring-seen') : ''}">
               <div class="story-avatar-inner">
-                ${user ? renderAvatarHTML(user, 'avatar-md') : '<div class="avatar avatar-md">?</div>'}
+                ${renderAvatarHTML(user, 'avatar-md')}
               </div>
               ${!yourStoryGroup ? `<div class="story-add-badge">+</div>` : ''}
             </div>

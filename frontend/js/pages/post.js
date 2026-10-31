@@ -35,7 +35,7 @@ export const initPostPage = async () => {
 
   const currentUser = getCurrentUser();
   if (avatarMount) {
-    avatarMount.innerHTML = currentUser ? renderAvatarHTML(currentUser, 'avatar-sm') : '<div class="avatar avatar-sm">?</div>';
+    avatarMount.innerHTML = renderAvatarHTML(currentUser, 'avatar-sm');
   }
 
   const postId = getPostIdFromPath();

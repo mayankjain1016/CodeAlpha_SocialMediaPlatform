@@ -64,13 +64,17 @@ const loadMoreExplore = async () => {
     if (currentTopic) params.set('topic', currentTopic);
 
     const res = await api.get(`/posts/explore?${params.toString()}`);
-    const posts = res.posts || [];
+    const posts = res.posts || res.items || [];
     nextCursor = res.nextCursor || null;
 
     if (posts.length === 0 && (!masonryContainer.children.length)) {
       masonryContainer.innerHTML = `
         <div style="grid-column: 1 / -1; padding: 48px 20px; text-align: center; color: var(--text-muted);">
-          <div style="font-size: 2.2rem; margin-bottom: 8px;">🎨</div>
+          <div style="margin-bottom: 12px; color: var(--text-muted); display: flex; justify-content: center;">
+            <svg class="icon icon-lg" width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round">
+              <circle cx="12" cy="12" r="10"/><polygon points="16.24 7.76 14.12 14.12 7.76 16.24 9.88 9.88 16.24 7.76"/>
+            </svg>
+          </div>
           <div style="font-weight: 700; font-size: var(--text-base); color: var(--text-main); margin-bottom: 4px;">Nothing here yet</div>
           <div style="font-size: var(--text-xs);">Try exploring another topic or share your own thoughts!</div>
         </div>

@@ -81,6 +81,26 @@ img, video {
   display: block;
 }
 
+/* Universal SVG & Icon System */
+svg {
+  max-width: 100%;
+}
+
+.icon, svg.icon {
+  width: 1.25rem; /* 20px default */
+  height: 1.25rem;
+  flex-shrink: 0;
+  stroke-width: 1.75;
+  display: inline-block;
+  vertical-align: middle;
+}
+
+.icon-xs, svg.icon-xs { width: 14px; height: 14px; }
+.icon-sm, svg.icon-sm { width: 16px; height: 16px; }
+.icon-md, svg.icon-md { width: 20px; height: 20px; }
+.icon-lg, svg.icon-lg { width: 24px; height: 24px; }
+.icon-xl, svg.icon-xl { width: 32px; height: 32px; }
+
 /* Tabular Numbers */
 .tnum {
   font-variant-numeric: tabular-nums;
