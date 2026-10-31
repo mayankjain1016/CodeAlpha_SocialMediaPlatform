@@ -9,17 +9,21 @@ export const renderUserCard = (user, { onFollowToggled = null } = {}) => {
   const card = document.createElement('div');
   card.className = 'user-card';
   card.style.padding = '12px 16px';
-  card.style.borderBottom = '1px solid var(--border-subtle)';
+  card.style.borderBottom = '1px solid var(--hairline)';
+  card.style.display = 'flex';
+  card.style.alignItems = 'center';
+  card.style.justifyContent = 'space-between';
+  card.style.gap = '12px';
 
   const currentUserId = getCurrentUser()?._id;
   const isMe = currentUserId && user._id === currentUserId;
 
   card.innerHTML = `
-    <a href="/u/${escapeHTML(user.username)}" class="user-card-info" style="text-decoration: none; flex: 1;">
+    <a href="/u/${escapeHTML(user.username)}" class="user-card-info" style="display: flex; align-items: center; gap: 12px; text-decoration: none; flex: 1; min-width: 0;">
       ${renderAvatarHTML(user, 'avatar-md')}
-      <div class="user-card-text">
-        <span class="user-card-name">${escapeHTML(user.name)}</span>
-        <span class="user-card-handle">@${escapeHTML(user.username)}</span>
+      <div style="min-width: 0; display: flex; flex-direction: column;">
+        <span style="font-family: var(--font-display); font-weight: 700; font-size: 0.95rem; color: var(--text-main); white-space: nowrap; overflow: hidden; text-overflow: ellipsis;">${escapeHTML(user.name)}</span>
+        <span style="font-size: 0.78rem; color: var(--text-muted);">@${escapeHTML(user.username)}</span>
         ${user.bio ? `<span style="font-size: 0.78rem; color: var(--text-secondary); margin-top: 2px; display: -webkit-box; -webkit-line-clamp: 1; -webkit-box-orient: vertical; overflow: hidden;">${escapeHTML(user.bio)}</span>` : ''}
       </div>
     </a>
@@ -36,7 +40,7 @@ export const renderUserCard = (user, { onFollowToggled = null } = {}) => {
     followBtn.onclick = async (e) => {
       e.preventDefault();
       if (!isAuthenticated()) {
-        openGuestModal('follow people');
+        openGuestModal('follow creators');
         return;
       }
 

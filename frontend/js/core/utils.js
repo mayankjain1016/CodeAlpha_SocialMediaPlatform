@@ -21,16 +21,17 @@ export const linkify = (text) => {
   // Linkify hashtags: #tag -> /explore?tag=tag
   const withHashtags = safeText.replace(
     /#([a-zA-Z0-9_]+)/g,
-    '<a href="/explore?tag=$1" class="tag-link" onclick="event.stopPropagation()">#$1</a>'
+    '<a href="/explore?tag=$1" class="tag-pill" onclick="event.stopPropagation()">#$1</a>'
   );
 
   // Linkify mentions: @username -> /u/username
   const withMentions = withHashtags.replace(
     /@([a-zA-Z0-9_]{3,20})/g,
-    '<a href="/u/$1" class="mention-link" onclick="event.stopPropagation()">@$1</a>'
+    '<a href="/u/$1" class="mention-pill" onclick="event.stopPropagation()">@$1</a>'
   );
 
   return withMentions;
+
 };
 
 /**

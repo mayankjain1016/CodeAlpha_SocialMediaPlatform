@@ -18,50 +18,61 @@ if (isAuthenticated()) {
   window.location.href = '/';
 }
 
-// Password show/hide toggle
 let isPasswordVisible = false;
-pwToggle.onclick = () => {
-  isPasswordVisible = !isPasswordVisible;
-  passwordInput.type = isPasswordVisible ? 'text' : 'password';
-  pwToggle.innerHTML = isPasswordVisible ? icons.eyeOff() : icons.eye();
-};
+if (pwToggle) {
+  pwToggle.onclick = () => {
+    isPasswordVisible = !isPasswordVisible;
+    passwordInput.type = isPasswordVisible ? 'text' : 'password';
+    pwToggle.innerHTML = isPasswordVisible ? icons.eyeOff() : icons.eye();
+  };
+}
 
-// Password strength meter calculation
-passwordInput.addEventListener('input', () => {
-  const val = passwordInput.value;
-  let score = 0;
+// Password strength meter
+if (passwordInput && strengthFill) {
+  passwordInput.addEventListener('input', () => {
+    const val = passwordInput.value;
+    let score = 0;
 
-  if (val.length >= 6) score++;
-  if (val.length >= 10) score++;
-  if (/[A-Z]/.test(val) && /[a-z]/.test(val)) score++;
-  if (/[0-9]/.test(val)) score++;
-  if (/[^A-Za-z0-9]/.test(val)) score++;
+    if (val.length >= 6) score++;
+    if (val.length >= 10) score++;
+    if (/[A-Z]/.test(val) && /[a-z]/.test(val)) score++;
+    if (/[0-9]/.test(val)) score++;
+    if (/[^A-Za-z0-9]/.test(val)) score++;
 
-  if (val.length === 0) {
-    strengthFill.style.width = '0';
-    strengthLabel.textContent = '';
-  } else if (score <= 1) {
-    strengthFill.style.width = '25%';
-    strengthFill.style.backgroundColor = 'var(--red-500)';
-    strengthLabel.textContent = 'Weak';
-    strengthLabel.style.color = 'var(--red-500)';
-  } else if (score === 2) {
-    strengthFill.style.width = '50%';
-    strengthFill.style.backgroundColor = 'var(--amber-500)';
-    strengthLabel.textContent = 'Fair';
-    strengthLabel.style.color = 'var(--amber-500)';
-  } else if (score === 3 || score === 4) {
-    strengthFill.style.width = '75%';
-    strengthFill.style.backgroundColor = 'var(--primary)';
-    strengthLabel.textContent = 'Good';
-    strengthLabel.style.color = 'var(--primary)';
-  } else {
-    strengthFill.style.width = '100%';
-    strengthFill.style.backgroundColor = 'var(--emerald-500)';
-    strengthLabel.textContent = 'Strong';
-    strengthLabel.style.color = 'var(--emerald-500)';
-  }
-});
+    if (val.length === 0) {
+      strengthFill.style.width = '0%';
+      if (strengthLabel) strengthLabel.textContent = '';
+    } else if (score <= 1) {
+      strengthFill.style.width = '25%';
+      strengthFill.style.backgroundColor = 'var(--coral-500)';
+      if (strengthLabel) {
+        strengthLabel.textContent = 'Weak';
+        strengthLabel.style.color = 'var(--coral-500)';
+      }
+    } else if (score === 2) {
+      strengthFill.style.width = '50%';
+      strengthFill.style.backgroundColor = 'var(--marigold-400)';
+      if (strengthLabel) {
+        strengthLabel.textContent = 'Fair';
+        strengthLabel.style.color = 'var(--marigold-400)';
+      }
+    } else if (score === 3 || score === 4) {
+      strengthFill.style.width = '75%';
+      strengthFill.style.backgroundColor = 'var(--teal-500)';
+      if (strengthLabel) {
+        strengthLabel.textContent = 'Good';
+        strengthLabel.style.color = 'var(--teal-500)';
+      }
+    } else {
+      strengthFill.style.width = '100%';
+      strengthFill.style.backgroundColor = 'var(--emerald-500)';
+      if (strengthLabel) {
+        strengthLabel.textContent = 'Strong';
+        strengthLabel.style.color = 'var(--emerald-500)';
+      }
+    }
+  });
+}
 
 form.onsubmit = async (e) => {
   e.preventDefault();
@@ -86,6 +97,7 @@ form.onsubmit = async (e) => {
   }
 
   submitBtn.disabled = true;
+  submitBtn.classList.add('loading');
   submitBtn.innerHTML = '<span class="btn-spinner"></span>';
 
   try {
@@ -97,16 +109,22 @@ form.onsubmit = async (e) => {
     });
 
     setAuth(res.token, res.user);
+
+    // Morph button into checkmark
+    submitBtn.classList.remove('loading');
+    submitBtn.style.backgroundColor = 'var(--teal-600)';
+    submitBtn.innerHTML = `<span>${icons.check()} Account Created</span>`;
+
     showToast(`Welcome to Sangam, ${res.user.name}!`, 'success');
 
     setTimeout(() => {
       window.location.href = '/';
-    }, 400);
+    }, 450);
   } catch (err) {
+    submitBtn.classList.remove('loading');
+    submitBtn.disabled = false;
+    submitBtn.innerHTML = '<span>Create Account</span>';
     generalError.textContent = err.message || 'Registration failed. Please check your details.';
     generalError.style.display = 'block';
-  } finally {
-    submitBtn.disabled = false;
-    submitBtn.textContent = 'Create Account';
   }
 };

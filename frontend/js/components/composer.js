@@ -5,6 +5,8 @@ import { icons } from '../core/icons.js';
 import { showToast } from '../core/toast.js';
 import { openGuestModal } from '../core/modal.js';
 
+const HANDPICKED_EMOJIS = ['✨', '🚀', '💡', '🔥', '☕', '❤️', '🌊', '🌿', '🎨', '⚡', '💬', '🌸', '🙏', '🎯', '👏', '🤝', '☀️', '🌙'];
+
 /**
  * Compress an image file using an offscreen canvas to max 1200px and under 400KB
  */
@@ -43,7 +45,6 @@ export const compressImageFile = (file) => {
         let quality = 0.82;
         let dataUrl = canvas.toDataURL('image/jpeg', quality);
 
-        // If data URL length roughly exceeds 400KB (base64 ~ 540K chars), lower quality
         if (dataUrl.length > 540000) {
           quality = 0.65;
           dataUrl = canvas.toDataURL('image/jpeg', quality);
@@ -60,42 +61,55 @@ export const compressImageFile = (file) => {
 export const initComposer = (container, { onSuccess = null } = {}) => {
   if (!container) return;
 
-  const user = getCurrentUser() || { name: 'You', avatarHue: 215 };
+  const user = getCurrentUser() || { name: 'You', username: 'guest', avatarHue: 175 };
   let selectedImageDataUrl = null;
   const MAX_CHARS = 280;
   const CIRCUMFERENCE = 69.1; // 2 * PI * 11
 
   container.innerHTML = `
-    <div class="composer-box">
-      ${renderAvatarHTML(user, 'avatar-md')}
-      <div class="composer-main">
-        <textarea class="composer-textarea" placeholder="What is happening in your world?" maxlength="280" aria-label="Compose post text"></textarea>
+    <div class="composer-card">
+      <div class="composer-header">
+        ${renderAvatarHTML(user, 'avatar-md')}
+        <div style="flex: 1; min-width: 0;">
+          <textarea class="composer-textarea" placeholder="Where rivers meet... share a story, idea, or thought" maxlength="280" aria-label="Compose post text"></textarea>
+        </div>
+      </div>
 
-        <div class="composer-preview-wrap" style="display: none;">
-          <img class="composer-preview-img" src="" alt="Attached image preview">
-          <button class="composer-preview-remove" title="Remove image" aria-label="Remove image">
-            ${icons.x()}
+      <div class="composer-preview-wrap" style="display: none;">
+        <img class="composer-preview-img" src="" alt="Attached image preview">
+        <button class="composer-preview-remove" title="Remove image" aria-label="Remove image">
+          ${icons.x()}
+        </button>
+      </div>
+
+      <div class="composer-footer">
+        <div class="composer-tools">
+          <input type="file" class="composer-file-input" accept="image/jpeg,image/png,image/webp" style="display: none;" aria-label="Upload image">
+          <button type="button" class="btn-icon composer-img-btn" title="Add image" aria-label="Add image">
+            ${icons.image()}
           </button>
+          
+          <div style="position: relative;">
+            <button type="button" class="btn-icon composer-emoji-btn" title="Add emoji" aria-label="Add emoji">
+              ${icons.smile()}
+            </button>
+            <div class="emoji-popover" style="display: none;">
+              ${HANDPICKED_EMOJIS.map(em => `<button type="button" class="emoji-btn" data-emoji="${em}">${em}</button>`).join('')}
+            </div>
+          </div>
         </div>
 
-        <div class="composer-actions-bar">
-          <div class="composer-tools">
-            <input type="file" class="composer-file-input" accept="image/jpeg,image/png,image/webp" style="display: none;" aria-label="Upload image">
-            <button class="btn-icon composer-img-btn" title="Add image" aria-label="Add image">
-              ${icons.image()}
-            </button>
+        <div class="composer-submit-group">
+          <div class="char-ring-wrap" title="Characters remaining">
+            <svg class="char-ring-svg" viewBox="0 0 28 28">
+              <circle class="char-ring-bg" cx="14" cy="14" r="11" fill="none" stroke-width="2.5"/>
+              <circle class="char-ring-progress" cx="14" cy="14" r="11" fill="none" stroke-width="2.5"
+                stroke-dasharray="${CIRCUMFERENCE}" stroke-dashoffset="${CIRCUMFERENCE}"/>
+            </svg>
           </div>
-
-          <div class="composer-submit-group">
-            <div class="char-ring-wrap" title="Characters remaining">
-              <svg class="char-ring-svg" viewBox="0 0 28 28">
-                <circle class="char-ring-bg" cx="14" cy="14" r="11" fill="none" stroke-width="2.5"/>
-                <circle class="char-ring-progress" cx="14" cy="14" r="11" fill="none" stroke-width="2.5"
-                  stroke-dasharray="${CIRCUMFERENCE}" stroke-dashoffset="${CIRCUMFERENCE}"/>
-              </svg>
-            </div>
-            <button class="btn btn-primary btn-compose" disabled>Post</button>
-          </div>
+          <button class="btn btn-primary btn-compose" disabled>
+            <span>Post</span>
+          </button>
         </div>
       </div>
     </div>
@@ -104,6 +118,8 @@ export const initComposer = (container, { onSuccess = null } = {}) => {
   const textarea = container.querySelector('.composer-textarea');
   const fileInput = container.querySelector('.composer-file-input');
   const imgBtn = container.querySelector('.composer-img-btn');
+  const emojiBtn = container.querySelector('.composer-emoji-btn');
+  const emojiPopover = container.querySelector('.emoji-popover');
   const previewWrap = container.querySelector('.composer-preview-wrap');
   const previewImg = container.querySelector('.composer-preview-img');
   const removeImgBtn = container.querySelector('.composer-preview-remove');
@@ -113,7 +129,7 @@ export const initComposer = (container, { onSuccess = null } = {}) => {
   // Auto-grow textarea
   const updateTextareaHeight = () => {
     textarea.style.height = 'auto';
-    textarea.style.height = `${Math.min(textarea.scrollHeight, 300)}px`;
+    textarea.style.height = `${Math.min(textarea.scrollHeight, 320)}px`;
   };
 
   // Update character progress ring and submit button state
@@ -137,6 +153,36 @@ export const initComposer = (container, { onSuccess = null } = {}) => {
   textarea.addEventListener('input', () => {
     updateTextareaHeight();
     updateState();
+  });
+
+  // Emoji Popover Toggle
+  emojiBtn.onclick = (e) => {
+    e.stopPropagation();
+    const isVisible = emojiPopover.style.display === 'grid';
+    emojiPopover.style.display = isVisible ? 'none' : 'grid';
+  };
+
+  document.addEventListener('click', (e) => {
+    if (!emojiPopover.contains(e.target) && !emojiBtn.contains(e.target)) {
+      emojiPopover.style.display = 'none';
+    }
+  });
+
+  // Emoji Click
+  emojiPopover.querySelectorAll('.emoji-btn').forEach(btn => {
+    btn.onclick = (e) => {
+      e.stopPropagation();
+      const emoji = btn.dataset.emoji;
+      const start = textarea.selectionStart || textarea.value.length;
+      const end = textarea.selectionEnd || textarea.value.length;
+      const text = textarea.value;
+      textarea.value = text.substring(0, start) + emoji + text.substring(end);
+      textarea.focus();
+      textarea.selectionStart = textarea.selectionEnd = start + emoji.length;
+      emojiPopover.style.display = 'none';
+      updateTextareaHeight();
+      updateState();
+    };
   });
 
   // Attach Image trigger
@@ -171,18 +217,19 @@ export const initComposer = (container, { onSuccess = null } = {}) => {
   });
 
   // Drag and drop image onto composer
-  container.addEventListener('dragover', (e) => {
+  const composerCard = container.querySelector('.composer-card');
+  composerCard.addEventListener('dragover', (e) => {
     e.preventDefault();
-    container.style.borderColor = 'var(--primary)';
+    composerCard.style.outline = '2px dashed var(--accent-primary)';
   });
 
-  container.addEventListener('dragleave', () => {
-    container.style.borderColor = '';
+  composerCard.addEventListener('dragleave', () => {
+    composerCard.style.outline = '';
   });
 
-  container.addEventListener('drop', (e) => {
+  composerCard.addEventListener('drop', (e) => {
     e.preventDefault();
-    container.style.borderColor = '';
+    composerCard.style.outline = '';
     if (!isAuthenticated()) {
       openGuestModal('attach photos');
       return;
@@ -200,7 +247,7 @@ export const initComposer = (container, { onSuccess = null } = {}) => {
     updateState();
   };
 
-  // Submit Post
+  // Submit Post with morphing button
   submitBtn.onclick = async () => {
     if (!isAuthenticated()) {
       openGuestModal('publish posts');
@@ -217,7 +264,6 @@ export const initComposer = (container, { onSuccess = null } = {}) => {
     try {
       let mediaId = null;
 
-      // Upload media if present
       if (selectedImageDataUrl) {
         const mediaRes = await api.post('/media', { dataUrl: selectedImageDataUrl });
         mediaId = mediaRes.id;
@@ -233,7 +279,7 @@ export const initComposer = (container, { onSuccess = null } = {}) => {
       updateTextareaHeight();
       updateState();
 
-      showToast('Post published successfully!', 'success');
+      showToast('Post published to Sangam!', 'success');
 
       if (typeof onSuccess === 'function') {
         onSuccess(res.post);
@@ -242,7 +288,7 @@ export const initComposer = (container, { onSuccess = null } = {}) => {
       showToast(err.message || 'Failed to publish post', 'error');
     } finally {
       submitBtn.classList.remove('loading');
-      submitBtn.textContent = 'Post';
+      submitBtn.innerHTML = '<span>Post</span>';
       updateState();
     }
   };

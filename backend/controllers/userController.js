@@ -227,11 +227,13 @@ const searchUsers = asyncHandler(async (req, res) => {
 });
 
 const getSuggestions = asyncHandler(async (req, res) => {
-  const currentUserId = req.user._id;
-  const currentUser = await User.findById(currentUserId).select('following');
+  let excludedIds = [];
+  const currentUserId = req.user ? req.user._id : null;
 
-  // People I do not follow and not myself
-  const excludedIds = [...currentUser.following, currentUserId];
+  if (currentUserId) {
+    const currentUser = await User.findById(currentUserId).select('following');
+    excludedIds = [...(currentUser?.following || []), currentUserId];
+  }
 
   // Find users not in excludedIds, sorted by follower count descending
   const candidates = await User.find({
@@ -242,7 +244,6 @@ const getSuggestions = asyncHandler(async (req, res) => {
     .limit(10)
     .lean();
 
-  // Sort by mutual follows if available, or take top 5
   const formatted = candidates.slice(0, 5).map(u => ({
     _id: u._id,
     name: u.name,
@@ -258,6 +259,7 @@ const getSuggestions = asyncHandler(async (req, res) => {
 
   res.json({ users: formatted });
 });
+
 
 module.exports = {
   getProfile,

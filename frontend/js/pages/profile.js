@@ -7,9 +7,10 @@ import { renderUserCard } from '../components/userCard.js';
 import { renderFeedSkeletons } from '../components/skeletons.js';
 import { icons } from '../core/icons.js';
 import { escapeHTML } from '../core/utils.js';
-import { countUp, staggerEntrance } from '../core/motion.js';
+import { countUp, staggerEntrance, initCardTilt } from '../core/motion.js';
 import { openModal, closeModal, openGuestModal } from '../core/modal.js';
 import { showToast } from '../core/toast.js';
+import { openLightbox } from '../components/lightbox.js';
 
 let profileUser = null;
 let activeTab = 'posts'; // 'posts' | 'media'
@@ -18,10 +19,9 @@ let isLoading = false;
 let hasReachedEnd = false;
 let selectedBannerPreset = 0;
 
-const heroMount = document.getElementById('profile-hero');
+const heroMount = document.getElementById('profile-hero-mount');
 const streamEl = document.getElementById('user-posts-stream');
 const sentinelEl = document.getElementById('profile-sentinel');
-const backBtn = document.getElementById('profile-back-btn');
 const tabPosts = document.getElementById('tab-user-posts');
 const tabMedia = document.getElementById('tab-user-media');
 const tabIndicator = document.getElementById('profile-tab-indicator');
@@ -37,13 +37,12 @@ const userListModal = document.getElementById('user-list-modal');
 const userListMount = document.getElementById('user-list-mount');
 const userListTitle = document.getElementById('user-list-title');
 
-// Extract username from URL path: /u/:username
 const getUsernameFromPath = () => {
   const parts = window.location.pathname.split('/');
   return parts[2] || '';
 };
 
-const initProfilePage = async () => {
+export const initProfilePage = async () => {
   renderAppShell('profile');
 
   const username = getUsernameFromPath();
@@ -51,14 +50,6 @@ const initProfilePage = async () => {
     window.location.href = '/';
     return;
   }
-
-  backBtn.onclick = () => {
-    if (window.history.length > 1) {
-      window.history.back();
-    } else {
-      window.location.href = '/';
-    }
-  };
 
   updateTabIndicator();
   setupTabListeners();
@@ -76,135 +67,150 @@ const updateTabIndicator = () => {
 
 const setupTabListeners = () => {
   window.addEventListener('resize', updateTabIndicator);
+  setTimeout(updateTabIndicator, 50);
 
-  tabPosts.onclick = () => {
-    if (activeTab === 'posts') return;
-    activeTab = 'posts';
-    tabPosts.classList.add('active');
-    tabPosts.setAttribute('aria-selected', 'true');
-    tabMedia.classList.remove('active');
-    tabMedia.setAttribute('aria-selected', 'false');
-    updateTabIndicator();
-    loadUserPosts(true);
-  };
+  if (tabPosts) {
+    tabPosts.onclick = () => {
+      if (activeTab === 'posts') return;
+      activeTab = 'posts';
+      tabPosts.classList.add('active');
+      tabPosts.setAttribute('aria-selected', 'true');
+      tabMedia.classList.remove('active');
+      tabMedia.setAttribute('aria-selected', 'false');
+      updateTabIndicator();
+      loadUserPosts(true);
+    };
+  }
 
-  tabMedia.onclick = () => {
-    if (activeTab === 'media') return;
-    activeTab = 'media';
-    tabMedia.classList.add('active');
-    tabMedia.setAttribute('aria-selected', 'true');
-    tabPosts.classList.remove('active');
-    tabPosts.setAttribute('aria-selected', 'false');
-    updateTabIndicator();
-    loadUserPosts(true);
-  };
+  if (tabMedia) {
+    tabMedia.onclick = () => {
+      if (activeTab === 'media') return;
+      activeTab = 'media';
+      tabMedia.classList.add('active');
+      tabMedia.setAttribute('aria-selected', 'true');
+      tabPosts.classList.remove('active');
+      tabPosts.setAttribute('aria-selected', 'false');
+      updateTabIndicator();
+      loadUserPosts(true);
+    };
+  }
 
   const observer = new IntersectionObserver((entries) => {
     if (entries[0].isIntersecting && !isLoading && !hasReachedEnd) {
       loadUserPosts(false);
     }
-  }, { rootMargin: '200px' });
-  observer.observe(sentinelEl);
+  }, { rootMargin: '220px' });
+  if (sentinelEl) observer.observe(sentinelEl);
 };
 
 const loadProfile = async (username) => {
   try {
     const data = await api.get(`/users/${encodeURIComponent(username)}`);
     profileUser = data.user;
-
-    // Update Header
-    document.getElementById('header-profile-name').textContent = profileUser.name;
-    document.getElementById('header-profile-postscount').textContent = `${profileUser.postsCount} post${profileUser.postsCount === 1 ? '' : 's'}`;
     document.title = `${profileUser.name} (@${profileUser.username}) / Sangam`;
-
     renderHero();
   } catch (err) {
-    heroMount.innerHTML = `
-      <div style="padding: 48px; text-align: center; color: var(--red-500);">
-        <h3>User not found</h3>
-        <p style="color: var(--text-muted); margin-bottom: 16px;">This account doesn't exist.</p>
-        <a href="/" class="btn btn-secondary">Go Home</a>
-      </div>
-    `;
-    sentinelEl.style.display = 'none';
+    if (heroMount) {
+      heroMount.innerHTML = `
+        <div class="empty-state-card">
+          <div class="empty-state-svg">${icons.user()}</div>
+          <h3 style="font-family: var(--font-display); font-size: 1.3rem; margin-bottom: 6px;">Profile Not Found</h3>
+          <p style="color: var(--text-secondary); margin-bottom: 16px;">This user does not exist or has been relocated.</p>
+          <a href="/" class="btn btn-primary btn-sm">Return Home</a>
+        </div>
+      `;
+    }
+    if (sentinelEl) sentinelEl.style.display = 'none';
   }
 };
 
 const renderHero = () => {
   const u = profileUser;
+  if (!u || !heroMount) return;
+
   const joinDate = new Date(u.createdAt).toLocaleDateString('en-US', { month: 'long', year: 'numeric' });
   const presetClass = `banner-preset-${u.bannerPreset || 0}`;
 
   heroMount.innerHTML = `
-    <!-- Top Banner -->
-    <div class="${presetClass}" style="height: 180px; width: 100%; position: relative;"></div>
+    <div class="profile-bento-header spotlight-card" id="bento-profile-card">
+      <!-- Generative Tall Banner -->
+      <div class="${presetClass} profile-banner-hero"></div>
 
-    <!-- Profile Details & Avatar -->
-    <div style="padding: 0 16px 16px; position: relative;">
-      <!-- Action row with avatar and button -->
-      <div style="display: flex; align-items: flex-end; justify-content: space-between; margin-top: -48px; margin-bottom: 14px;">
-        <div class="avatar-profile-ring">
-          ${renderAvatarHTML(u, 'avatar-xl')}
+      <!-- Profile Details -->
+      <div class="profile-header-body">
+        <div class="profile-avatar-row">
+          <div class="avatar-story-ring">
+            ${renderAvatarHTML(u, 'avatar-xl')}
+          </div>
+
+          <div>
+            ${u.isMe ? `
+              <button type="button" class="btn btn-secondary" id="edit-profile-trigger">
+                <span>Edit Profile</span>
+              </button>
+            ` : `
+              <button type="button" class="btn btn-secondary btn-follow ${u.isFollowing ? 'following' : ''}" id="profile-follow-btn">
+                <span>${u.isFollowing ? 'Following' : 'Follow'}</span>
+              </button>
+            `}
+          </div>
         </div>
 
+        <!-- Names & Verification -->
         <div>
-          ${u.isMe ? `
-            <button class="btn btn-secondary" id="edit-profile-trigger">
-              Edit profile
-            </button>
-          ` : `
-            <button class="btn btn-secondary btn-follow ${u.isFollowing ? 'following' : ''}" id="profile-follow-btn">
-              ${u.isFollowing ? 'Following' : 'Follow'}
-            </button>
-          `}
+          <h1 class="profile-display-name">${escapeHTML(u.name)}</h1>
+          <div class="profile-handle-sub">@${escapeHTML(u.username)}</div>
         </div>
-      </div>
 
-      <!-- Names -->
-      <div style="margin-bottom: 12px;">
-        <h2 style="font-size: var(--text-xl); font-weight: 800; line-height: 1.1; margin-bottom: 2px;">
-          ${escapeHTML(u.name)}
-        </h2>
-        <span style="color: var(--text-muted); font-size: 0.88rem;">@${escapeHTML(u.username)}</span>
-      </div>
+        <!-- Bio -->
+        ${u.bio ? `
+          <p class="profile-bio-text">${escapeHTML(u.bio)}</p>
+        ` : ''}
 
-      <!-- Bio -->
-      ${u.bio ? `
-        <p style="font-size: 0.95rem; color: var(--text-main); line-height: 1.45; margin-bottom: 14px; word-break: break-word;">
-          ${escapeHTML(u.bio)}
-        </p>
-      ` : ''}
+        <!-- Meta row: Joined Date -->
+        <div class="profile-meta-row">
+          <span style="display: flex; align-items: center; gap: 6px;">
+            ${icons.calendar()}
+            <span>Joined ${joinDate}</span>
+          </span>
+        </div>
 
-      <!-- Joined info -->
-      <div style="display: flex; align-items: center; gap: 6px; font-size: 0.82rem; color: var(--text-muted); margin-bottom: 16px;">
-        <span>${icons.calendar('nav-icon')}</span>
-        <span>Joined ${joinDate}</span>
-      </div>
-
-      <!-- Counts with Count-Up & Modal trigger -->
-      <div style="display: flex; gap: 20px; font-size: 0.88rem;">
-        <button id="view-following-btn" style="color: var(--text-muted); display: flex; gap: 5px;">
-          <strong id="following-count-val" style="color: var(--text-main);">0</strong> Following
-        </button>
-        <button id="view-followers-btn" style="color: var(--text-muted); display: flex; gap: 5px;">
-          <strong id="followers-count-val" style="color: var(--text-main);">0</strong> Followers
-        </button>
+        <!-- Bento Stat Tiles with Count-up -->
+        <div class="profile-stats-bento">
+          <div class="profile-stat-box">
+            <span class="profile-stat-val" id="stat-posts-val">0</span>
+            <span class="profile-stat-key">Posts</span>
+          </div>
+          <button type="button" class="profile-stat-box" id="btn-view-followers" style="text-align: left; cursor: pointer; transition: background var(--dur-fast) ease;">
+            <span class="profile-stat-val" id="stat-followers-val">0</span>
+            <span class="profile-stat-key">Followers</span>
+          </button>
+          <button type="button" class="profile-stat-box" id="btn-view-following" style="text-align: left; cursor: pointer; transition: background var(--dur-fast) ease;">
+            <span class="profile-stat-val" id="stat-following-val">0</span>
+            <span class="profile-stat-key">Following</span>
+          </button>
+        </div>
       </div>
     </div>
   `;
 
-  // Animate count-up stats
-  const followersEl = document.getElementById('followers-count-val');
-  const followingEl = document.getElementById('following-count-val');
-  countUp(followersEl, u.followersCount);
-  countUp(followingEl, u.followingCount);
+  // Attach 3D pointer tilt on desktop
+  const headerCard = heroMount.querySelector('#bento-profile-card');
+  if (headerCard) {
+    initCardTilt(headerCard);
+  }
 
-  // Attach Follow Toggle
+  // Count-up stats
+  countUp(document.getElementById('stat-posts-val'), u.postsCount);
+  countUp(document.getElementById('stat-followers-val'), u.followersCount);
+  countUp(document.getElementById('stat-following-val'), u.followingCount);
+
+  // Follow Button morphing
   const followBtn = document.getElementById('profile-follow-btn');
   if (followBtn) {
     followBtn.onclick = async () => {
       if (!isAuthenticated()) {
-        openGuestModal('follow people');
+        openGuestModal('follow creators');
         return;
       }
       followBtn.disabled = true;
@@ -221,7 +227,8 @@ const renderHero = () => {
           followBtn.classList.remove('following');
         }
 
-        followersEl.textContent = res.followersCount.toLocaleString();
+        const followersVal = document.getElementById('stat-followers-val');
+        if (followersVal) followersVal.textContent = res.followersCount.toLocaleString();
       } catch (err) {
         showToast(err.message, 'error');
       } finally {
@@ -230,15 +237,18 @@ const renderHero = () => {
     };
   }
 
-  // Attach Edit Profile Modal trigger
+  // Edit Profile Trigger
   const editBtn = document.getElementById('edit-profile-trigger');
   if (editBtn) {
-    editBtn.onclick = () => openEditModal();
+    editBtn.onclick = openEditModal;
   }
 
-  // Attach Followers / Following Modals
-  document.getElementById('view-followers-btn').onclick = () => openUserListModal('Followers');
-  document.getElementById('view-following-btn').onclick = () => openUserListModal('Following');
+  // Community List Modals
+  const followersBox = document.getElementById('btn-view-followers');
+  if (followersBox) followersBox.onclick = () => openUserListModal('Followers');
+
+  const followingBox = document.getElementById('btn-view-following');
+  if (followingBox) followingBox.onclick = () => openUserListModal('Following');
 };
 
 const openEditModal = () => {
@@ -249,7 +259,7 @@ const openEditModal = () => {
 
   // Render 8 banner presets picker
   bannerPicker.innerHTML = Array(8).fill(0).map((_, i) => `
-    <div class="banner-preset-${i} preset-swatch ${i === selectedBannerPreset ? 'active' : ''}" data-preset="${i}" style="height: 44px; border-radius: var(--radius-sm); cursor: pointer; border: 2px solid ${i === selectedBannerPreset ? 'var(--primary)' : 'transparent'}; transition: border 0.15s ease;"></div>
+    <div class="banner-preset-${i} preset-swatch ${i === selectedBannerPreset ? 'active' : ''}" data-preset="${i}" style="height: 48px; border-radius: var(--radius-md); cursor: pointer; border: 2.5px solid ${i === selectedBannerPreset ? 'var(--accent-primary)' : 'transparent'}; transition: border 0.2s ease;"></div>
   `).join('');
 
   bannerPicker.querySelectorAll('.preset-swatch').forEach(swatch => {
@@ -257,7 +267,7 @@ const openEditModal = () => {
       selectedBannerPreset = parseInt(swatch.dataset.preset, 10);
       bannerPicker.querySelectorAll('.preset-swatch').forEach(s => {
         const isSelected = parseInt(s.dataset.preset, 10) === selectedBannerPreset;
-        s.style.borderColor = isSelected ? 'var(--primary)' : 'transparent';
+        s.style.borderColor = isSelected ? 'var(--accent-primary)' : 'transparent';
       });
     };
   });
@@ -323,8 +333,8 @@ const openUserListModal = async (type) => {
 
     if (users.length === 0) {
       userListMount.innerHTML = `
-        <div style="padding: 32px 16px; text-align: center; color: var(--text-muted);">
-          No ${type.toLowerCase()} yet.
+        <div style="padding: 36px 16px; text-align: center; color: var(--text-muted); font-size: 0.9rem;">
+          No ${type.toLowerCase()} found yet.
         </div>
       `;
     } else {
@@ -334,11 +344,12 @@ const openUserListModal = async (type) => {
       });
     }
   } catch (err) {
-    userListMount.innerHTML = `<div style="padding: 24px; color: var(--red-500);">${err.message}</div>`;
+    userListMount.innerHTML = `<div style="padding: 24px; color: var(--coral-500);">${err.message}</div>`;
   }
 };
 
 const loadUserPosts = async (reset = false) => {
+  if (!streamEl) return;
   if (isLoading) return;
   if (!reset && hasReachedEnd) return;
 
@@ -348,12 +359,12 @@ const loadUserPosts = async (reset = false) => {
     nextCursor = null;
     hasReachedEnd = false;
     streamEl.innerHTML = renderFeedSkeletons(3);
-    sentinelEl.style.display = 'block';
+    if (sentinelEl) sentinelEl.style.display = 'block';
   }
 
   try {
     const mediaParam = activeTab === 'media' ? '&mediaOnly=true' : '';
-    const url = `/posts/user/${encodeURIComponent(getUsernameFromPath())}?limit=10${nextCursor ? `&cursor=${nextCursor}` : ''}${mediaParam}`;
+    const url = `/posts/user/${encodeURIComponent(getUsernameFromPath())}?limit=12${nextCursor ? `&cursor=${nextCursor}` : ''}${mediaParam}`;
 
     const data = await api.get(url);
     const items = data.items || [];
@@ -363,39 +374,62 @@ const loadUserPosts = async (reset = false) => {
 
     if (items.length === 0 && reset) {
       streamEl.innerHTML = `
-        <div style="padding: 48px 24px; text-align: center; color: var(--text-secondary);">
-          <h3 style="margin-bottom: 6px; color: var(--text-main);">No ${activeTab} yet</h3>
-          <p style="max-width: 320px; margin: 0 auto;">When @${escapeHTML(getUsernameFromPath())} shares ${activeTab}, they will appear here.</p>
+        <div class="empty-state-card">
+          <div class="empty-state-svg">${activeTab === 'media' ? icons.image() : icons.message()}</div>
+          <h3 style="font-family: var(--font-display); font-size: 1.25rem; font-weight: 800; margin: 0 0 6px 0;">No ${activeTab} yet</h3>
+          <p style="color: var(--text-secondary); max-width: 320px; margin: 0 auto; font-size: 0.9rem;">
+            When @${escapeHTML(getUsernameFromPath())} publishes ${activeTab}, they will appear here.
+          </p>
         </div>
       `;
-      sentinelEl.style.display = 'none';
+      if (sentinelEl) sentinelEl.style.display = 'none';
       hasReachedEnd = true;
     } else {
-      const fragment = document.createDocumentFragment();
-      items.forEach(post => {
-        fragment.appendChild(renderPostCard(post, {
-          onPostDeleted: () => {
-            profileUser.postsCount = Math.max(0, profileUser.postsCount - 1);
-            document.getElementById('header-profile-postscount').textContent = `${profileUser.postsCount} posts`;
-          }
-        }));
-      });
-      streamEl.appendChild(fragment);
+      if (activeTab === 'media') {
+        // Media Masonry Grid
+        let grid = streamEl.querySelector('.media-masonry-grid');
+        if (!grid) {
+          grid = document.createElement('div');
+          grid.className = 'media-masonry-grid';
+          streamEl.appendChild(grid);
+        }
+
+        items.forEach(post => {
+          if (!post.image) return;
+          const item = document.createElement('div');
+          item.className = 'media-grid-item';
+          item.innerHTML = `<img src="${escapeHTML(post.image)}" alt="Media post" loading="lazy">`;
+          item.onclick = () => openLightbox(post.image, post.text || 'Sangam media');
+          grid.appendChild(item);
+        });
+      } else {
+        const fragment = document.createDocumentFragment();
+        items.forEach(post => {
+          fragment.appendChild(renderPostCard(post, {
+            onPostDeleted: () => {
+              profileUser.postsCount = Math.max(0, profileUser.postsCount - 1);
+              const postCountEl = document.getElementById('stat-posts-val');
+              if (postCountEl) postCountEl.textContent = profileUser.postsCount;
+            }
+          }));
+        });
+        streamEl.appendChild(fragment);
+      }
 
       staggerEntrance(streamEl);
 
       if (!nextCursor) {
         hasReachedEnd = true;
-        sentinelEl.innerHTML = `<span style="color: var(--text-faint);">End of posts</span>`;
+        if (sentinelEl) sentinelEl.innerHTML = `<span style="color: var(--text-faint); font-size: 0.82rem;">End of conversations</span>`;
       } else {
-        sentinelEl.innerHTML = `<span class="btn-spinner" style="display: inline-block; border-color: var(--border-medium); border-top-color: var(--primary);"></span>`;
+        if (sentinelEl) sentinelEl.innerHTML = `<span class="btn-spinner" style="display: inline-block;"></span>`;
       }
     }
   } catch (err) {
     if (reset) {
-      streamEl.innerHTML = `<div style="padding: 24px; text-align: center; color: var(--red-500);"><p>${err.message}</p></div>`;
+      streamEl.innerHTML = `<div style="padding: 24px; text-align: center; color: var(--coral-500);"><p>${err.message}</p></div>`;
     }
-    sentinelEl.style.display = 'none';
+    if (sentinelEl) sentinelEl.style.display = 'none';
   } finally {
     isLoading = false;
   }

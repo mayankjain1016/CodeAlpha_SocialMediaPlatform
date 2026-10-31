@@ -1,122 +1,201 @@
 import { renderAppShell } from '../core/shell.js';
 import { api } from '../core/api.js';
-import { renderPostCard } from '../components/postCard.js';
-import { renderUserCard } from '../components/userCard.js';
-import { renderFeedSkeletons } from '../components/skeletons.js';
+import { renderAvatarHTML } from '../core/avatar.js';
+import { icons } from '../core/icons.js';
 import { staggerEntrance } from '../core/motion.js';
-import { debounce, escapeHTML } from '../core/utils.js';
+import { debounce, escapeHTML, linkify } from '../core/utils.js';
+import { openLightbox } from '../components/lightbox.js';
 
 let activeTag = null;
 let nextCursor = null;
 let isLoading = false;
 let hasReachedEnd = false;
 
-const streamEl = document.getElementById('explore-posts-stream');
+const masonryEl = document.getElementById('explore-masonry-stream');
 const sentinelEl = document.getElementById('explore-sentinel');
-const trendingStrip = document.getElementById('trending-strip');
-const activeTagChip = document.getElementById('active-tag-chip');
-const chipTagName = document.getElementById('chip-tag-name');
-const clearTagBtn = document.getElementById('clear-tag-btn');
+const chipsContainer = document.getElementById('topic-chips-container');
 const searchInput = document.getElementById('explore-search-input');
+const clearSearchBtn = document.getElementById('clear-search-btn');
 const peopleResults = document.getElementById('explore-people-results');
 
-const initExplorePage = async () => {
+export const initExplorePage = async () => {
   renderAppShell('explore');
 
   // Read URL query param ?tag=
   const urlParams = new URLSearchParams(window.location.search);
   const tagParam = urlParams.get('tag');
-  if (tagParam) {
+  if (tagParam && tagParam !== 'all') {
     activeTag = tagParam.replace(/^#/, '').toLowerCase();
   }
 
-  updateTagChip();
+  syncChipState();
   setupListeners();
-  await loadTrendingStrip();
   await loadExplorePosts(true);
 };
 
-const updateTagChip = () => {
-  if (activeTag) {
-    chipTagName.textContent = `#${activeTag}`;
-    activeTagChip.style.display = 'inline-flex';
-  } else {
-    activeTagChip.style.display = 'none';
-  }
+const syncChipState = () => {
+  if (!chipsContainer) return;
+  const targetTag = activeTag || 'all';
+  chipsContainer.querySelectorAll('.topic-chip').forEach(btn => {
+    btn.classList.toggle('active', btn.dataset.tag === targetTag);
+  });
 };
 
 const setupListeners = () => {
-  clearTagBtn.onclick = () => {
-    activeTag = null;
-    window.history.pushState({}, '', '/explore');
-    updateTagChip();
-    loadExplorePosts(true);
-  };
+  // Topic Chip click
+  if (chipsContainer) {
+    chipsContainer.addEventListener('click', (e) => {
+      const chip = e.target.closest('.topic-chip');
+      if (!chip) return;
+      const tag = chip.dataset.tag;
+      if (tag === 'all') {
+        activeTag = null;
+        window.history.pushState({}, '', '/explore');
+      } else {
+        activeTag = tag;
+        window.history.pushState({}, '', `/explore?tag=${encodeURIComponent(tag)}`);
+      }
+      syncChipState();
+      loadExplorePosts(true);
+    });
+  }
 
-  // Search input inside explore page
+  // Clear search input button
+  if (clearSearchBtn && searchInput) {
+    clearSearchBtn.onclick = () => {
+      searchInput.value = '';
+      clearSearchBtn.style.display = 'none';
+      peopleResults.style.display = 'none';
+      peopleResults.innerHTML = '';
+      activeTag = null;
+      loadExplorePosts(true);
+    };
+  }
+
+  // Search input handler (people + tag filtering)
   const onSearch = debounce(async (query) => {
     const trimmed = query.trim();
     if (!trimmed) {
-      peopleResults.style.display = 'none';
-      peopleResults.innerHTML = '';
+      if (clearSearchBtn) clearSearchBtn.style.display = 'none';
+      if (peopleResults) {
+        peopleResults.style.display = 'none';
+        peopleResults.innerHTML = '';
+      }
+      return;
+    }
+
+    if (clearSearchBtn) clearSearchBtn.style.display = 'block';
+
+    // If starts with #, filter stream directly
+    if (trimmed.startsWith('#')) {
+      activeTag = trimmed.replace(/^#/, '').toLowerCase();
+      syncChipState();
+      loadExplorePosts(true);
       return;
     }
 
     try {
       const data = await api.get(`/users/search?q=${encodeURIComponent(trimmed)}`);
       const users = data.users || [];
-      if (users.length > 0) {
-        peopleResults.innerHTML = users.map(u => renderUserCard(u).outerHTML).join('');
+      if (users.length > 0 && peopleResults) {
+        peopleResults.innerHTML = `
+          <div style="padding: 6px 12px; font-size: 0.75rem; font-weight: 700; text-transform: uppercase; color: var(--text-muted); letter-spacing: 0.05em;">People</div>
+          ${users.map(u => `
+            <a href="/u/${escapeHTML(u.username)}" style="display: flex; align-items: center; gap: 10px; padding: 8px 12px; border-radius: var(--radius-md); text-decoration: none; color: var(--text-main); transition: background var(--dur-fast) ease;" class="dropdown-item">
+              ${renderAvatarHTML(u, 'avatar-xs')}
+              <div>
+                <div style="font-weight: 700; font-size: 0.88rem;">${escapeHTML(u.name)}</div>
+                <div style="font-size: 0.75rem; color: var(--text-muted);">@${escapeHTML(u.username)}</div>
+              </div>
+            </a>
+          `).join('')}
+        `;
         peopleResults.style.display = 'block';
-      } else {
+      } else if (peopleResults) {
         peopleResults.style.display = 'none';
       }
-    } catch (e) {
-      peopleResults.style.display = 'none';
+    } catch (_) {
+      if (peopleResults) peopleResults.style.display = 'none';
     }
-  }, 250);
+  }, 220);
 
-  searchInput.addEventListener('input', (e) => onSearch(e.target.value));
+  if (searchInput) {
+    searchInput.addEventListener('input', (e) => onSearch(e.target.value));
+  }
 
   // Infinite scroll
   const observer = new IntersectionObserver((entries) => {
     if (entries[0].isIntersecting && !isLoading && !hasReachedEnd) {
       loadExplorePosts(false);
     }
-  }, { rootMargin: '200px' });
-  observer.observe(sentinelEl);
+  }, { rootMargin: '240px' });
+  if (sentinelEl) observer.observe(sentinelEl);
 };
 
-const loadTrendingStrip = async () => {
-  try {
-    const data = await api.get('/trending');
-    const tags = data.trending || [];
-    trendingStrip.innerHTML = tags.map(t => `
-      <button class="btn btn-secondary btn-sm trend-pill ${activeTag === t.tag ? 'btn-primary' : ''}" data-tag="${escapeHTML(t.tag)}" style="border-radius: var(--radius-full); white-space: nowrap;">
-        #${escapeHTML(t.tag)}
-      </button>
-    `).join('');
+const renderExploreTile = (post) => {
+  const tile = document.createElement('article');
+  tile.className = 'explore-tile spotlight-card';
+  tile.id = `explore-${post._id}`;
 
-    trendingStrip.querySelectorAll('.trend-pill').forEach(btn => {
-      btn.onclick = () => {
-        const tag = btn.dataset.tag;
-        if (activeTag === tag) return;
-        activeTag = tag;
-        window.history.pushState({}, '', `/explore?tag=${encodeURIComponent(tag)}`);
-        updateTagChip();
-        trendingStrip.querySelectorAll('.trend-pill').forEach(b => {
-          b.classList.toggle('btn-primary', b.dataset.tag === activeTag);
-          b.classList.toggle('btn-secondary', b.dataset.tag !== activeTag);
-        });
-        loadExplorePosts(true);
+  const author = post.author || { name: 'Anonymous', username: 'unknown', avatarHue: 175 };
+
+  if (post.image) {
+    tile.innerHTML = `
+      <div class="explore-tile-img-wrap">
+        <img src="${escapeHTML(post.image)}" alt="Explore post image" loading="lazy">
+        <div class="explore-tile-overlay">
+          <div style="display: flex; align-items: center; gap: 8px; margin-bottom: 8px;">
+            ${renderAvatarHTML(author, 'avatar-xs')}
+            <span style="font-weight: 700; font-size: 0.88rem; text-shadow: 0 1px 4px rgba(0,0,0,0.6);">${escapeHTML(author.name)}</span>
+          </div>
+          ${post.text ? `<p style="font-size: 0.84rem; line-height: 1.35; margin: 0 0 8px; display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden; opacity: 0.95;">${escapeHTML(post.text)}</p>` : ''}
+          <div style="display: flex; gap: 14px; font-size: 0.78rem; font-weight: 600;">
+            <span style="display: flex; align-items: center; gap: 4px;">${icons.heart()} ${post.likesCount || 0}</span>
+            <span style="display: flex; align-items: center; gap: 4px;">${icons.message()} ${post.commentsCount || 0}</span>
+          </div>
+        </div>
+      </div>
+    `;
+
+    const imgEl = tile.querySelector('img');
+    if (imgEl) {
+      imgEl.onclick = (e) => {
+        e.stopPropagation();
+        openLightbox(post.image, post.text || 'Sangam Explore Image');
       };
-    });
-  } catch (e) {
-    trendingStrip.innerHTML = '';
+    }
+  } else {
+    tile.innerHTML = `
+      <div class="explore-tile-content">
+        <div style="display: flex; align-items: center; gap: 10px; margin-bottom: 12px;">
+          ${renderAvatarHTML(author, 'avatar-xs')}
+          <div style="min-width: 0;">
+            <div style="font-family: var(--font-display); font-weight: 700; font-size: 0.9rem; color: var(--text-main);">${escapeHTML(author.name)}</div>
+            <div style="font-size: 0.72rem; color: var(--text-muted);">@${escapeHTML(author.username)}</div>
+          </div>
+        </div>
+        <div style="font-size: 0.95rem; line-height: 1.55; color: var(--text-main); margin-bottom: 14px;">
+          ${linkify(post.text || '')}
+        </div>
+        <div style="display: flex; align-items: center; gap: 16px; font-size: 0.78rem; font-weight: 600; color: var(--text-muted); border-top: 1px solid var(--hairline); padding-top: 10px;">
+          <span style="display: flex; align-items: center; gap: 4px;">${icons.heart()} ${post.likesCount || 0}</span>
+          <span style="display: flex; align-items: center; gap: 4px;">${icons.message()} ${post.commentsCount || 0}</span>
+        </div>
+      </div>
+    `;
   }
+
+  // Navigate to post detail when clicking tile
+  tile.onclick = (e) => {
+    if (e.target.closest('a, button, .explore-tile-img-wrap img')) return;
+    window.location.href = `/post/${post._id}`;
+  };
+
+  return tile;
 };
 
 const loadExplorePosts = async (reset = false) => {
+  if (!masonryEl) return;
   if (isLoading) return;
   if (!reset && hasReachedEnd) return;
 
@@ -125,8 +204,13 @@ const loadExplorePosts = async (reset = false) => {
   if (reset) {
     nextCursor = null;
     hasReachedEnd = false;
-    streamEl.innerHTML = renderFeedSkeletons(4);
-    sentinelEl.style.display = 'block';
+    masonryEl.innerHTML = `
+      <div class="explore-tile skeleton" style="height: 240px;"></div>
+      <div class="explore-tile skeleton" style="height: 180px;"></div>
+      <div class="explore-tile skeleton" style="height: 300px;"></div>
+      <div class="explore-tile skeleton" style="height: 210px;"></div>
+    `;
+    if (sentinelEl) sentinelEl.style.display = 'block';
   }
 
   try {
@@ -139,38 +223,41 @@ const loadExplorePosts = async (reset = false) => {
     const items = data.items || [];
     nextCursor = data.nextCursor;
 
-    if (reset) streamEl.innerHTML = '';
+    if (reset) masonryEl.innerHTML = '';
 
     if (items.length === 0 && reset) {
-      streamEl.innerHTML = `
-        <div style="padding: 48px 24px; text-align: center; color: var(--text-secondary);">
-          <h3 style="margin-bottom: 8px; color: var(--text-main);">No posts found</h3>
-          <p style="max-width: 320px; margin: 0 auto;">${activeTag ? `No posts matching #${escapeHTML(activeTag)} yet.` : 'Explore is fresh and quiet right now.'}</p>
+      masonryEl.innerHTML = `
+        <div class="empty-state-card" style="grid-column: 1 / -1; width: 100%; margin: 24px auto;">
+          <div class="empty-state-svg">${icons.compass()}</div>
+          <h3 style="font-family: var(--font-display); font-size: 1.25rem; font-weight: 800; margin: 0 0 6px 0;">No streams found</h3>
+          <p style="color: var(--text-secondary); max-width: 340px; margin: 0 auto; font-size: 0.9rem;">
+            ${activeTag ? `No conversations tagged #${escapeHTML(activeTag)} yet. Be the first to spark a topic!` : 'Explore streams are quiet right now.'}
+          </p>
         </div>
       `;
-      sentinelEl.style.display = 'none';
+      if (sentinelEl) sentinelEl.style.display = 'none';
       hasReachedEnd = true;
     } else {
       const fragment = document.createDocumentFragment();
       items.forEach(post => {
-        fragment.appendChild(renderPostCard(post));
+        fragment.appendChild(renderExploreTile(post));
       });
-      streamEl.appendChild(fragment);
+      masonryEl.appendChild(fragment);
 
-      staggerEntrance(streamEl);
+      staggerEntrance(masonryEl, '.explore-tile');
 
       if (!nextCursor) {
         hasReachedEnd = true;
-        sentinelEl.innerHTML = `<span style="color: var(--text-faint);">End of explore feed</span>`;
+        if (sentinelEl) sentinelEl.innerHTML = `<span style="color: var(--text-faint); font-size: 0.82rem;">You've reached the confluence of all streams</span>`;
       } else {
-        sentinelEl.innerHTML = `<span class="btn-spinner" style="display: inline-block; border-color: var(--border-medium); border-top-color: var(--primary);"></span>`;
+        if (sentinelEl) sentinelEl.innerHTML = `<span class="btn-spinner" style="display: inline-block;"></span>`;
       }
     }
   } catch (err) {
     if (reset) {
-      streamEl.innerHTML = `<div style="padding: 32px; text-align: center; color: var(--red-500);"><p>${err.message}</p></div>`;
+      masonryEl.innerHTML = `<div style="padding: 32px; text-align: center; color: var(--coral-500);"><p>${err.message}</p></div>`;
     }
-    sentinelEl.style.display = 'none';
+    if (sentinelEl) sentinelEl.style.display = 'none';
   } finally {
     isLoading = false;
   }

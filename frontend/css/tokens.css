@@ -1,18 +1,22 @@
 :root {
-  /* Fonts */
-  --font-heading: 'Plus Jakarta Sans', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
+  /* =========================================
+     TYPOGRAPHY TOKENS
+     ========================================= */
+  --font-display: 'Bricolage Grotesque', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
   --font-body: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
-  --font-mono: 'JetBrains Mono', 'Fira Code', Menlo, Monaco, Consolas, monospace;
+  --font-mono: 'JetBrains Mono', Menlo, Monaco, Consolas, monospace;
 
-  /* Typography Scale */
-  --text-xs: clamp(0.72rem, 0.7rem + 0.1vw, 0.75rem);
-  --text-sm: clamp(0.82rem, 0.8rem + 0.1vw, 0.875rem);
-  --text-base: clamp(0.92rem, 0.9rem + 0.15vw, 1rem);
-  --text-md: clamp(1.05rem, 1rem + 0.25vw, 1.125rem);
-  --text-lg: clamp(1.2rem, 1.15rem + 0.35vw, 1.25rem);
-  --text-xl: clamp(1.35rem, 1.25rem + 0.5vw, 1.5rem);
-  --text-2xl: clamp(1.6rem, 1.45rem + 0.75vw, 1.875rem);
-  --text-3xl: clamp(2rem, 1.75rem + 1vw, 2.25rem);
+  /* Fluid Typography Scale */
+  --text-2xs: clamp(0.68rem, 0.65rem + 0.1vw, 0.72rem);
+  --text-xs: clamp(0.75rem, 0.72rem + 0.12vw, 0.8rem);
+  --text-sm: clamp(0.84rem, 0.8rem + 0.15vw, 0.88rem);
+  --text-base: clamp(0.94rem, 0.9rem + 0.2vw, 1.02rem);
+  --text-md: clamp(1.06rem, 1rem + 0.25vw, 1.15rem);
+  --text-lg: clamp(1.22rem, 1.15rem + 0.35vw, 1.32rem);
+  --text-xl: clamp(1.42rem, 1.3rem + 0.55vw, 1.62rem);
+  --text-2xl: clamp(1.75rem, 1.55rem + 0.9vw, 2.15rem);
+  --text-3xl: clamp(2.2rem, 1.9rem + 1.4vw, 2.85rem);
+  --text-hero: clamp(2.75rem, 2.2rem + 2.5vw, 4.25rem);
 
   /* Spacing Scale (4px base) */
   --space-0-5: 2px;
@@ -26,137 +30,176 @@
   --space-10: 40px;
   --space-12: 48px;
   --space-16: 64px;
+  --space-20: 80px;
 
-  /* Border Radii */
-  --radius-sm: 6px;
-  --radius-md: 10px;
-  --radius-lg: 14px;
-  --radius-xl: 20px;
+  /* Shape & Radii (Generous modern 2026 curve scale) */
+  --radius-xs: 8px;
+  --radius-sm: 14px;
+  --radius-md: 20px;
+  --radius-lg: 28px;
+  --radius-xl: 36px;
   --radius-full: 9999px;
 
-  /* Motion Tokens */
-  --ease-out: cubic-bezier(0.22, 1, 0.36, 1);
+  /* Motion & Easing Tokens */
   --ease-spring: cubic-bezier(0.34, 1.56, 0.64, 1);
+  --ease-out: cubic-bezier(0.22, 1, 0.36, 1);
   --ease-in-out: cubic-bezier(0.4, 0, 0.2, 1);
-  --dur-120: 120ms;
-  --dur-200: 200ms;
-  --dur-320: 320ms;
-  --dur-500: 500ms;
+  --dur-fast: 120ms;
+  --dur-normal: 200ms;
+  --dur-smooth: 360ms;
+  --dur-slow: 600ms;
 
-  /* Brand Primary Electric Blue */
-  --blue-50: #eff6ff;
-  --blue-100: #dbeafe;
-  --blue-200: #bfdbfe;
-  --blue-300: #93c5fd;
-  --blue-400: #60a5fa;
-  --blue-500: #2f6bff;
-  --blue-600: #1d4ed8;
-  --blue-700: #1e40af;
-  --blue-800: #1e3a8a;
-  --blue-900: #172554;
+  /* =========================================
+     BRAND CORE PALETTE (Rivers Meeting)
+     ========================================= */
+  /* Accent A: River Teal */
+  --teal-50: #eef9fa;
+  --teal-100: #d6f2f4;
+  --teal-200: #b0e5ea;
+  --teal-300: #78d2db;
+  --teal-400: #3ab6c3;
+  --teal-500: #0E7C86; /* Brand River Teal */
+  --teal-600: #0b6871;
+  --teal-700: #09545c;
+  --teal-800: #09454b;
+  --teal-900: #0c393e;
 
-  /* Semantic Accents */
-  --coral-500: #f43f5e;
-  --coral-600: #e11d48;
-  --coral-glow: rgba(244, 63, 94, 0.25);
-  --emerald-500: #10b981;
-  --emerald-600: #059669;
+  /* Accent B: Sun Marigold */
+  --marigold-50: #fff9ed;
+  --marigold-100: #ffefcf;
+  --marigold-200: #ffdda1;
+  --marigold-300: #ffc466;
+  --marigold-400: #FFA41B; /* Brand Marigold */
+  --marigold-500: #f58907;
+  --marigold-600: #d96a02;
+  --marigold-700: #b44d05;
+  --marigold-800: #903c0c;
+  --marigold-900: #76330e;
+
+  /* Reaction / Functional Accents */
+  --coral-500: #FF5A5F; /* Like coral */
+  --coral-600: #e54247;
+  --coral-glow: rgba(255, 90, 95, 0.22);
+  --success-500: #1F9D68;
+  --success-glow: rgba(31, 157, 104, 0.2);
   --amber-500: #f59e0b;
-  --amber-600: #d97706;
-  --red-500: #ef4444;
+  --red-500: #e11d48;
 
-  /* Light Theme (Default) */
-  --bg-app: #f8fafc;
-  --bg-surface: #ffffff;
-  --bg-surface-elevated: #ffffff;
-  --bg-surface-subtle: #f1f5f9;
-  --bg-surface-hover: #f1f5f9;
-  --bg-surface-active: #e2e8f0;
-  --bg-glass: rgba(255, 255, 255, 0.85);
+  /* River Confluence Gradient Accent */
+  --gradient-confluence: linear-gradient(135deg, var(--teal-500) 0%, var(--marigold-400) 100%);
+  --gradient-confluence-glow: linear-gradient(135deg, rgba(14, 124, 134, 0.2) 0%, rgba(255, 164, 27, 0.25) 100%);
 
-  --border-subtle: rgba(15, 23, 42, 0.08);
-  --border-medium: rgba(15, 23, 42, 0.14);
-  --border-focus: #2f6bff;
+  /* =========================================
+     LIGHT THEME: "Paper & River" (Default)
+     ========================================= */
+  --bg-app: #F4F1EA;
+  --bg-surface: #FFFFFF;
+  --bg-surface-2: #FBF9F4;
+  --bg-surface-hover: #F2EFE8;
+  --bg-surface-active: #EAE6DD;
+  --bg-glass: rgba(255, 255, 255, 0.78);
+  --bg-glass-card: rgba(255, 255, 255, 0.88);
 
-  --text-main: #0f172a;
-  --text-secondary: #475569;
-  --text-muted: #64748b;
-  --text-faint: #94a3b8;
-  --text-inverse: #ffffff;
+  --ink: #14110F;
+  --text-main: #14110F;
+  --text-secondary: #4A443E;
+  --text-muted: #6B645C;
+  --text-faint: #9C948A;
+  --text-inverse: #FFFFFF;
 
-  --primary: #2f6bff;
-  --primary-hover: #2256d6;
-  --primary-light: #eff6ff;
-  --primary-glow: rgba(47, 107, 255, 0.2);
+  --hairline: rgba(20, 17, 15, 0.07);
+  --hairline-strong: rgba(20, 17, 15, 0.14);
+  --border-focus: var(--teal-500);
 
-  --shadow-sm: 0 1px 2px rgba(15, 23, 42, 0.05);
-  --shadow-md: 0 4px 12px -1px rgba(15, 23, 42, 0.08), 0 2px 4px -2px rgba(15, 23, 42, 0.05);
-  --shadow-lg: 0 12px 28px -4px rgba(15, 23, 42, 0.12), 0 4px 8px -2px rgba(15, 23, 42, 0.06);
-  --shadow-modal: 0 20px 40px -10px rgba(15, 23, 42, 0.2), 0 10px 20px -5px rgba(15, 23, 42, 0.1);
+  /* Primary Button in light mode: confident Ink Black pill with Marigold glow */
+  --btn-primary-bg: #14110F;
+  --btn-primary-text: #FFFFFF;
+  --btn-primary-hover: #26221F;
+  --btn-primary-glow: rgba(255, 164, 27, 0.35);
 
-  /* Layout dimensions */
+  --accent-primary: var(--teal-500);
+  --accent-secondary: var(--marigold-400);
+
+  /* Tactile diffused shadows (no harsh grey borders) */
+  --shadow-sm: 0 2px 6px -1px rgba(20, 17, 15, 0.04), 0 1px 2px -1px rgba(20, 17, 15, 0.03);
+  --shadow-card: 0 8px 24px -4px rgba(20, 17, 15, 0.05), 0 2px 6px -1px rgba(20, 17, 15, 0.03);
+  --shadow-hover: 0 16px 36px -6px rgba(20, 17, 15, 0.09), 0 4px 12px -2px rgba(20, 17, 15, 0.04);
+  --shadow-floating: 0 20px 48px -8px rgba(20, 17, 15, 0.12), 0 6px 16px -4px rgba(20, 17, 15, 0.06);
+  --shadow-modal: 0 28px 64px -12px rgba(20, 17, 15, 0.22), 0 10px 24px -6px rgba(20, 17, 15, 0.1);
+
+  /* Layout Widths */
   --shell-max-width: 1240px;
-  --nav-width: 250px;
-  --sidebar-width: 330px;
-  --header-height: 60px;
-  --bottom-bar-height: 64px;
+  --navbar-height: 64px;
+  --bottom-dock-height: 68px;
 }
 
-/* Dark Theme */
+/* =========================================
+   DARK THEME: "Midnight Ink & Embers"
+   ========================================= */
 [data-theme="dark"] {
-  --bg-app: #0b0f14;
-  --bg-surface: #121821;
-  --bg-surface-elevated: #1a222d;
-  --bg-surface-subtle: #161e29;
-  --bg-surface-hover: #1e2836;
-  --bg-surface-active: #253346;
-  --bg-glass: rgba(18, 24, 33, 0.82);
+  --bg-app: #0C0B0A;
+  --bg-surface: #161412;
+  --bg-surface-2: #1E1B18;
+  --bg-surface-hover: #26221E;
+  --bg-surface-active: #2F2A25;
+  --bg-glass: rgba(22, 20, 18, 0.82);
+  --bg-glass-card: rgba(22, 20, 18, 0.9);
 
-  --border-subtle: rgba(255, 255, 255, 0.07);
-  --border-medium: rgba(255, 255, 255, 0.12);
-  --border-focus: #60a5fa;
+  --ink: #F5F1EA;
+  --text-main: #F5F1EA;
+  --text-secondary: #C8BFB4;
+  --text-muted: #A39A8F;
+  --text-faint: #6E665D;
+  --text-inverse: #0C0B0A;
 
-  --text-main: #f1f5f9;
-  --text-secondary: #94a3b8;
-  --text-muted: #64748b;
-  --text-faint: #475569;
-  --text-inverse: #0b0f14;
+  --hairline: rgba(245, 241, 234, 0.07);
+  --hairline-strong: rgba(245, 241, 234, 0.14);
+  --border-focus: var(--marigold-400);
 
-  --primary: #3b82f6;
-  --primary-hover: #2563eb;
-  --primary-light: rgba(59, 130, 246, 0.15);
-  --primary-glow: rgba(59, 130, 246, 0.35);
+  /* Primary Button in dark mode: Paper White pill with warm glow */
+  --btn-primary-bg: #F5F1EA;
+  --btn-primary-text: #14110F;
+  --btn-primary-hover: #FFFFFF;
+  --btn-primary-glow: rgba(255, 164, 27, 0.45);
 
-  --shadow-sm: 0 1px 3px rgba(0, 0, 0, 0.4);
-  --shadow-md: 0 6px 18px rgba(0, 0, 0, 0.45);
-  --shadow-lg: 0 16px 36px rgba(0, 0, 0, 0.55);
-  --shadow-modal: 0 24px 50px -5px rgba(0, 0, 0, 0.7);
+  --accent-primary: #149AA6;
+  --accent-secondary: #FFB340;
+
+  --shadow-sm: 0 2px 8px rgba(0, 0, 0, 0.35);
+  --shadow-card: 0 8px 28px rgba(0, 0, 0, 0.45);
+  --shadow-hover: 0 16px 40px rgba(0, 0, 0, 0.6);
+  --shadow-floating: 0 24px 56px rgba(0, 0, 0, 0.7);
+  --shadow-modal: 0 32px 72px rgba(0, 0, 0, 0.85);
 }
 
-/* 8 Handcrafted Profile Banner Presets */
+/* =========================================
+   8 GENERATIVE BENTO BANNER PRESETS
+   Inspired by natural rivers, confluences, and horizons
+   ========================================= */
 .banner-preset-0 {
-  background: linear-gradient(135deg, #1e3a8a 0%, #3b82f6 50%, #06b6d4 100%);
+  background: linear-gradient(135deg, #09454b 0%, #0E7C86 50%, #FFA41B 100%);
 }
 .banner-preset-1 {
-  background: linear-gradient(135deg, #4c1d95 0%, #7c3aed 50%, #f43f5e 100%);
+  background: linear-gradient(135deg, #2A1B40 0%, #68307E 50%, #FF5A5F 100%);
 }
 .banner-preset-2 {
-  background: linear-gradient(135deg, #064e3b 0%, #059669 50%, #10b981 100%);
+  background: linear-gradient(135deg, #083321 0%, #1F9D68 55%, #78D2DB 100%);
 }
 .banner-preset-3 {
-  background: linear-gradient(135deg, #78350f 0%, #d97706 50%, #fbbf24 100%);
+  background: linear-gradient(135deg, #4A2800 0%, #FFA41B 60%, #FFE08F 100%);
 }
 .banner-preset-4 {
-  background: linear-gradient(135deg, #0f172a 0%, #334155 50%, #1e293b 100%),
-              radial-gradient(circle at 80% 20%, rgba(59,130,246,0.3) 0%, transparent 60%);
+  background: radial-gradient(circle at 80% 20%, rgba(255, 164, 27, 0.4) 0%, transparent 60%),
+              linear-gradient(135deg, #1C1814 0%, #383028 50%, #14110F 100%);
 }
 .banner-preset-5 {
-  background: linear-gradient(135deg, #831843 0%, #be185d 50%, #fb7185 100%);
+  background: linear-gradient(135deg, #571026 0%, #B82247 50%, #FF9066 100%);
 }
 .banner-preset-6 {
-  background: linear-gradient(135deg, #134e4a 0%, #0d9488 50%, #2dd4bf 100%);
+  background: linear-gradient(135deg, #0E3547 0%, #149AA6 50%, #89E5CF 100%);
 }
 .banner-preset-7 {
-  background: linear-gradient(135deg, #18181b 0%, #27272a 40%, #3f3f46 100%),
-              radial-gradient(circle at 20% 80%, rgba(244,63,94,0.35) 0%, transparent 50%);
+  background: radial-gradient(circle at 20% 80%, rgba(14, 124, 134, 0.45) 0%, transparent 60%),
+              radial-gradient(circle at 85% 15%, rgba(255, 164, 27, 0.35) 0%, transparent 55%),
+              linear-gradient(135deg, #14110F 0%, #29241F 100%);
 }

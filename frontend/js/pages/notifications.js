@@ -9,45 +9,49 @@ import { showToast } from '../core/toast.js';
 const streamEl = document.getElementById('notif-stream');
 const markAllBtn = document.getElementById('mark-all-read-btn');
 
-const initNotificationsPage = async () => {
+export const initNotificationsPage = async () => {
   renderAppShell('notifications');
 
   if (!isAuthenticated()) {
     streamEl.innerHTML = `
-      <div style="padding: 48px 24px; text-align: center;">
-        <h3 style="margin-bottom: 8px;">Activity on Sangam</h3>
-        <p style="color: var(--text-secondary); max-width: 340px; margin: 0 auto 16px;">Log in to view interactions, likes, and replies to your posts.</p>
-        <a href="/login" class="btn btn-primary">Log In</a>
+      <div class="empty-state-card">
+        <div class="empty-state-svg">${icons.bell()}</div>
+        <h3 style="font-family: var(--font-display); font-size: 1.3rem; margin-bottom: 6px;">Sign in to view activity</h3>
+        <p style="color: var(--text-secondary); max-width: 360px; margin: 0 auto 16px; font-size: 0.9rem;">
+          Connect with builders, follow your favorite writers, and receive updates when people engage with your thoughts.
+        </p>
+        <a href="/login" class="btn btn-primary btn-sm">Log In</a>
       </div>
     `;
-    markAllBtn.style.display = 'none';
+    if (markAllBtn) markAllBtn.style.display = 'none';
     return;
   }
 
-  markAllBtn.onclick = async () => {
-    try {
-      await api.post('/notifications/read-all');
-      document.querySelectorAll('.notif-item.unread').forEach(el => {
-        el.classList.remove('unread');
-        el.style.backgroundColor = 'var(--bg-surface)';
-      });
-      updateUnreadBadge();
-      showToast('All notifications marked as read', 'success');
-    } catch (err) {
-      showToast(err.message || 'Action failed', 'error');
-    }
-  };
+  if (markAllBtn) {
+    markAllBtn.onclick = async () => {
+      try {
+        await api.post('/notifications/read-all');
+        document.querySelectorAll('.notif-card.unread').forEach(el => {
+          el.classList.remove('unread');
+          const dot = el.querySelector('.notif-unread-dot');
+          if (dot) dot.remove();
+        });
+        updateUnreadBadge();
+        showToast('All notifications marked as read', 'success');
+      } catch (err) {
+        showToast(err.message || 'Action failed', 'error');
+      }
+    };
+  }
 
   await loadNotifications();
 };
 
 const loadNotifications = async () => {
   streamEl.innerHTML = `
-    <div style="padding: 16px;">
-      <div class="skeleton" style="height: 56px; margin-bottom: 8px;"></div>
-      <div class="skeleton" style="height: 56px; margin-bottom: 8px;"></div>
-      <div class="skeleton" style="height: 56px; margin-bottom: 8px;"></div>
-    </div>
+    <div class="skeleton" style="height: 72px; margin-bottom: 12px; border-radius: var(--radius-lg);"></div>
+    <div class="skeleton" style="height: 72px; margin-bottom: 12px; border-radius: var(--radius-lg);"></div>
+    <div class="skeleton" style="height: 72px; margin-bottom: 12px; border-radius: var(--radius-lg);"></div>
   `;
 
   try {
@@ -56,14 +60,22 @@ const loadNotifications = async () => {
 
     if (notifs.length === 0) {
       streamEl.innerHTML = `
-        <div style="padding: 64px 24px; text-align: center; color: var(--text-secondary);">
-          <div style="width: 48px; height: 48px; margin: 0 auto 16px; border-radius: var(--radius-full); background: var(--bg-surface-subtle); display: flex; align-items: center; justify-content: center; color: var(--text-muted);">
-            ${icons.bell('nav-icon')}
+        <div class="empty-state-card">
+          <div class="empty-state-svg">
+            <svg viewBox="0 0 140 140" fill="none" width="100%" height="100%">
+              <circle cx="70" cy="70" r="56" stroke="var(--hairline-strong)" stroke-width="2"/>
+              <circle cx="70" cy="70" r="42" fill="var(--bg-surface-2)"/>
+              <path d="M70 42C61.1634 42 54 49.1634 54 58V72L48 78V82H92V78L86 72V58C86 49.1634 78.8366 42 70 42Z" fill="var(--teal-500)"/>
+              <path d="M64 86C64 89.3137 66.6863 92 70 92C73.3137 92 76 89.3137 76 86H64Z" fill="var(--marigold-400)"/>
+            </svg>
           </div>
-          <h3 style="margin-bottom: 6px; color: var(--text-main);">No notifications yet</h3>
-          <p style="max-width: 320px; margin: 0 auto;">When someone likes your posts, replies, or follows you, you’ll see it here.</p>
+          <h3 style="font-family: var(--font-display); font-size: 1.3rem; margin-bottom: 6px;">All clear</h3>
+          <p style="color: var(--text-secondary); max-width: 320px; margin: 0 auto; font-size: 0.9rem;">
+            No new activity right now. When creators react or reply to your posts, you will find them here.
+          </p>
         </div>
       `;
+      if (markAllBtn) markAllBtn.style.display = 'none';
       return;
     }
 
@@ -86,66 +98,73 @@ const loadNotifications = async () => {
     let html = '';
 
     if (todayNotifs.length > 0) {
-      html += `<div style="padding: 10px 16px; font-size: 0.75rem; font-weight: 700; color: var(--text-muted); background: var(--bg-surface-subtle); text-transform: uppercase; letter-spacing: 0.05em;">Today</div>`;
-      html += todayNotifs.map(n => renderNotificationRow(n)).join('');
+      html += `
+        <div class="notif-section-group">
+          <div class="notif-group-title">Today</div>
+          ${todayNotifs.map(n => renderNotificationCard(n)).join('')}
+        </div>
+      `;
     }
 
     if (earlierNotifs.length > 0) {
-      html += `<div style="padding: 10px 16px; font-size: 0.75rem; font-weight: 700; color: var(--text-muted); background: var(--bg-surface-subtle); text-transform: uppercase; letter-spacing: 0.05em;">Earlier</div>`;
-      html += earlierNotifs.map(n => renderNotificationRow(n)).join('');
+      html += `
+        <div class="notif-section-group">
+          <div class="notif-group-title">Earlier</div>
+          ${earlierNotifs.map(n => renderNotificationCard(n)).join('')}
+        </div>
+      `;
     }
 
     streamEl.innerHTML = html;
   } catch (err) {
-    streamEl.innerHTML = `<div style="padding: 32px; text-align: center; color: var(--red-500);"><p>${err.message}</p></div>`;
+    streamEl.innerHTML = `<div style="padding: 32px; text-align: center; color: var(--coral-500);"><p>${err.message}</p></div>`;
   }
 };
 
-const renderNotificationRow = (n) => {
-  const actor = n.actor || { name: 'Someone', username: 'user', avatarHue: 200 };
+const renderNotificationCard = (n) => {
+  const actor = n.actor || { name: 'Someone', username: 'user', avatarHue: 175 };
   const targetUrl = n.post ? `/post/${n.post._id}` : `/u/${actor.username}`;
 
-  let iconSvg = '';
-  let textDesc = '';
-  let iconColor = 'var(--primary)';
+  let bubbleClass = 'notif-bubble-heart';
+  let bubbleIcon = icons.heart();
+  let actionText = 'liked your post';
 
   if (n.type === 'like') {
-    iconSvg = icons.heart('nav-icon');
-    iconColor = 'var(--coral-500)';
-    textDesc = 'liked your post';
+    bubbleClass = 'notif-bubble-heart';
+    bubbleIcon = icons.heart();
+    actionText = 'liked your post';
   } else if (n.type === 'comment') {
-    iconSvg = icons.message('nav-icon');
-    iconColor = 'var(--primary)';
-    textDesc = 'commented on your post';
+    bubbleClass = 'notif-bubble-comment';
+    bubbleIcon = icons.message();
+    actionText = 'replied to your conversation';
   } else if (n.type === 'follow') {
-    iconSvg = icons.user('nav-icon');
-    iconColor = 'var(--emerald-500)';
-    textDesc = 'started following you';
+    bubbleClass = 'notif-bubble-follow';
+    bubbleIcon = icons.user();
+    actionText = 'started following your stream';
   } else if (n.type === 'mention') {
-    iconSvg = icons.sparkles('nav-icon');
-    iconColor = 'var(--amber-500)';
-    textDesc = 'mentioned you in a post';
+    bubbleClass = 'notif-bubble-comment';
+    bubbleIcon = icons.sparkles();
+    actionText = 'mentioned you in a post';
   }
 
-  const unreadBg = !n.read ? 'background-color: var(--primary-light);' : '';
-
   return `
-    <a href="${targetUrl}" class="notif-item ${!n.read ? 'unread' : ''}" style="display: flex; gap: 14px; padding: 14px 16px; border-bottom: 1px solid var(--border-subtle); color: var(--text-main); text-decoration: none; transition: background-color 0.15s ease; ${unreadBg}">
-      <div style="display: flex; flex-direction: column; align-items: center; gap: 4px; flex-shrink: 0;">
-        <span style="color: ${iconColor}; display: flex;">${iconSvg}</span>
+    <a href="${targetUrl}" class="notif-card spotlight-card ${!n.read ? 'unread' : ''}" style="text-decoration: none; color: inherit;">
+      ${!n.read ? `<span class="notif-unread-dot"></span>` : ''}
+      <div class="notif-bubble ${bubbleClass}">
+        ${bubbleIcon}
       </div>
 
       <div style="flex: 1; min-width: 0;">
-        <div style="display: flex; align-items: center; gap: 8px; margin-bottom: 4px;">
+        <div style="display: flex; align-items: baseline; gap: 6px; margin-bottom: 4px; flex-wrap: wrap;">
           ${renderAvatarHTML(actor, 'avatar-xs')}
-          <span style="font-weight: 700; font-size: 0.88rem;">${escapeHTML(actor.name)}</span>
-          <span style="color: var(--text-secondary); font-size: 0.88rem;">${textDesc}</span>
-          <span style="color: var(--text-faint); font-size: 0.75rem; margin-left: auto;">${timeAgo(n.createdAt)}</span>
+          <span style="font-family: var(--font-display); font-weight: 700; font-size: 0.92rem; color: var(--text-main);">${escapeHTML(actor.name)}</span>
+          <span style="font-size: 0.85rem; color: var(--text-secondary);">${actionText}</span>
+          <span style="font-size: 0.72rem; color: var(--text-muted); margin-left: auto;">${timeAgo(n.createdAt)}</span>
         </div>
 
         ${n.post && n.post.text ? `
-          <p style="font-size: 0.82rem; color: var(--text-secondary); margin: 0; display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden;">
-            ${escapeHTML(n.post.text)}
+          <p style="font-size: 0.84rem; color: var(--text-muted); margin: 0; line-height: 1.4; display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden;">
+            "${escapeHTML(n.post.text)}"
           </p>
         ` : ''}
       </div>

@@ -160,7 +160,7 @@ const postsData = [
     daysAgo: 1.3,
   },
   {
-    user: 'ananya_iyer',
+    user: 'ananyaiyer',
     text: 'Training 7B parameter reasoning models on local hardware with quantization is getting shockingly good. The edge AI revolution is arriving faster than anticipated. #ai #machinelearning #tech',
     image: '/assets/images/seed/ai_chip.jpg',
     daysAgo: 1.5,
@@ -207,7 +207,7 @@ const postsData = [
     image: '/assets/images/seed/laptop_coffee.jpg',
     daysAgo: 3.8,
   },
-  // Text-only posts
+  // Text-only posts & additional discussions
   {
     user: 'demo',
     text: 'Pro tip for clean architecture: keep your data models lean, decouple your business rules from the HTTP transport layer, and never skip centralized error handling. #webdev #cleancode',
@@ -298,7 +298,68 @@ const postsData = [
     image: null,
     daysAgo: 6.9,
   },
+  {
+    user: 'vikram_singh',
+    text: 'India’s DPI stack (UPI, ONDC, DigiLocker) is genuinely a masterclass in population-scale systems engineering. Excited for what the next generation builds on top of it. #fintech #digitalindia #engineering',
+    image: null,
+    daysAgo: 0.3,
+  },
+  {
+    user: 'poojareddy',
+    text: 'The secret to authentic Chettinad pepper chicken is dry roasting stone-ground spices just until aromatic. Never rush the masala base! #foodie #indiancuisine #cooking',
+    image: null,
+    daysAgo: 1.2,
+  },
+  {
+    user: 'meera_kapoor',
+    text: 'Golden light hitting the stepwells of Rajasthan at sunrise. India’s historic hydrology architecture is as breathtaking as any modern sculpture. #heritage #photography #architecture #travel',
+    image: '/assets/images/seed/mumbai_sea_link.jpg',
+    daysAgo: 1.6,
+  },
+  {
+    user: 'karan_mehta',
+    text: 'Our college team just qualified for the ACM ICPC regionals! Months of solving graph theory and DP problems on weekend nights finally paying off. Keep grinding! #icpc #coding #algorithms',
+    image: null,
+    daysAgo: 2.5,
+  },
+  {
+    user: 'rohit_cricket',
+    text: 'Gully cricket rules that defined our childhood: 1. One tip one hand out. 2. Lost ball means the batsman buys a new one. 3. Direct hit to uncle’s car is out. Who remembers? 😄 #cricket #childhood #memories',
+    image: null,
+    daysAgo: 3.5,
+  },
+  {
+    user: 'divya_joshi',
+    text: 'Mentoring 5 first-generation college coders this semester. Watching their eyes light up when their first pull request gets merged is the most rewarding feeling in the world. #mentorship #techcommunity',
+    image: null,
+    daysAgo: 4.8,
+  },
+  {
+    user: 'tanmay_dev',
+    text: 'PSA: Immutable infrastructure doesn’t mean never changing things; it means creating new versioned artifacts rather than mutating live production instances. Sleep peaceful at night. #devops #cloud',
+    image: null,
+    daysAgo: 5.5,
+  },
+  {
+    user: 'demo',
+    text: 'The beauty of clean vanilla web technologies: zero compilation step, zero npm security audit alerts in your client bundle, and loads in less than 80ms worldwide. Pure craft. #webdev #performance',
+    image: null,
+    daysAgo: 0.5,
+  },
+  {
+    user: 'priyasharma',
+    text: 'Paper and ink aesthetics with River Teal and Marigold accents. Digital products can feel tactile, organic and human if you treat typography and whitespace with love. #design #typography #craft',
+    image: null,
+    daysAgo: 0.7,
+  },
+  {
+    user: 'arjun_tech',
+    text: 'Early morning coffee thoughts: The best code is the code you didn’t have to write because you solved the problem at the domain model level. Simplicity is the ultimate sophistication. #cleancode #philosophy',
+    image: null,
+    daysAgo: 1.9,
+  },
 ];
+
 
 async function seed() {
   console.log('Connecting to database for seeding...');

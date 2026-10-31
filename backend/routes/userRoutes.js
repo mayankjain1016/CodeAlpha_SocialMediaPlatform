@@ -6,7 +6,7 @@ const { writeLimiter } = require('../middleware/rateLimiters');
 
 // Search & Suggestions
 router.get('/search', optionalAuth, userController.searchUsers);
-router.get('/suggestions', requireAuth, userController.getSuggestions);
+router.get('/suggestions', optionalAuth, userController.getSuggestions);
 
 // Current user profile update
 router.put('/me', requireAuth, writeLimiter, userController.updateProfile);

@@ -3,13 +3,13 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Create Account / Sangam</title>
-  <meta name="description" content="Join Sangam today. Connect with developers, designers, and creators across India.">
+  <title>Join Sangam / Where conversations meet</title>
+  <meta name="description" content="Create your Sangam creator account. Connect with developers, designers, and thinkers across India.">
   <link rel="icon" type="image/svg+xml" href="/assets/favicon.svg">
 
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Plus+Jakarta+Sans:wght@600;700;800&display=swap" rel="stylesheet">
+  <link href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,600;700;800&family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
 
   <link rel="stylesheet" href="/css/tokens.css">
   <link rel="stylesheet" href="/css/base.css">
@@ -18,116 +18,37 @@
   <link rel="stylesheet" href="/css/animations.css">
 
   <style>
-    .auth-page {
-      display: flex;
-      min-height: 100vh;
-      width: 100%;
-    }
-    .auth-brand-side {
-      flex: 1.1;
-      background: linear-gradient(135deg, #0b0f14 0%, #172554 45%, #1e1b4b 100%);
-      position: relative;
-      overflow: hidden;
-      display: flex;
-      flex-direction: column;
-      justify-content: space-between;
-      padding: var(--space-8);
-      color: #ffffff;
-    }
-    .auth-mesh-circle {
+    .auth-brand-mesh {
       position: absolute;
       border-radius: 50%;
-      filter: blur(80px);
-      opacity: 0.35;
+      filter: blur(90px);
+      opacity: 0.38;
       pointer-events: none;
     }
-    .mesh-1 {
-      width: 450px;
-      height: 450px;
-      background: #2563eb;
-      top: -50px;
-      left: -50px;
-      animation: floatMesh1 16s ease-in-out infinite alternate;
+    .auth-mesh-teal {
+      width: 480px;
+      height: 480px;
+      background: var(--teal-500);
+      top: -80px;
+      left: -80px;
+      animation: floatGentle 14s ease-in-out infinite alternate;
     }
-    .mesh-2 {
-      width: 400px;
-      height: 400px;
-      background: #7c3aed;
+    .auth-mesh-marigold {
+      width: 420px;
+      height: 420px;
+      background: var(--marigold-400);
       bottom: -60px;
       right: -60px;
-      animation: floatMesh2 14s ease-in-out infinite alternate;
+      animation: floatGentle 18s ease-in-out infinite alternate-reverse;
     }
-    @keyframes floatMesh1 {
-      0% { transform: translate(0, 0) scale(1); }
-      100% { transform: translate(60px, 40px) scale(1.15); }
-    }
-    @keyframes floatMesh2 {
-      0% { transform: translate(0, 0) scale(1); }
-      100% { transform: translate(-50px, -50px) scale(1.2); }
-    }
-    .floating-cards-wrap {
-      position: relative;
-      height: 340px;
-      margin: auto 0;
-    }
-    .floating-mock-card {
-      position: absolute;
-      background: rgba(18, 24, 33, 0.75);
-      border: 1px solid rgba(255, 255, 255, 0.12);
-      border-radius: var(--radius-xl);
-      padding: var(--space-4);
-      width: 320px;
-      box-shadow: 0 16px 36px rgba(0, 0, 0, 0.4);
-      backdrop-filter: blur(12px);
-      -webkit-backdrop-filter: blur(12px);
-    }
-    .float-1 {
-      top: 20px;
-      left: 10%;
-      animation: driftCard1 7s ease-in-out infinite alternate;
-    }
-    .float-2 {
-      bottom: 20px;
-      right: 10%;
-      animation: driftCard2 8s ease-in-out infinite alternate;
-    }
-    @keyframes driftCard1 {
-      0% { transform: translateY(0px) rotate(-1.5deg); }
-      100% { transform: translateY(-16px) rotate(1deg); }
-    }
-    @keyframes driftCard2 {
-      0% { transform: translateY(0px) rotate(2deg); }
-      100% { transform: translateY(-20px) rotate(-1deg); }
-    }
-    .auth-form-side {
-      flex: 1;
-      display: flex;
-      flex-direction: column;
-      justify-content: center;
-      align-items: center;
-      padding: var(--space-6) var(--space-8);
-      background-color: var(--bg-surface);
-    }
-    .auth-form-container {
-      width: 100%;
-      max-width: 420px;
-    }
-    .strength-meter-bar {
-      height: 4px;
-      border-radius: 2px;
-      background: var(--border-medium);
-      margin-top: 6px;
-      overflow: hidden;
-      position: relative;
-    }
-    .strength-meter-fill {
-      height: 100%;
-      width: 0;
-      transition: width 0.3s ease, background-color 0.3s ease;
-    }
-    @media (max-width: 900px) {
-      .auth-brand-side { display: none; }
-      .auth-form-side { padding: var(--space-6) var(--space-4); }
+    .auth-float-card {
+      background: var(--bg-surface);
+      border-radius: var(--radius-lg);
+      padding: var(--space-4) var(--space-5);
+      box-shadow: var(--shadow-card);
+      border: 1px solid var(--hairline-strong);
+      max-width: 360px;
+      margin: 12px 0;
     }
   </style>
 
@@ -139,121 +60,123 @@
   </script>
 </head>
 <body>
-  <div class="auth-page">
-    <div class="auth-brand-side" aria-hidden="true">
-      <div class="auth-mesh-circle mesh-1"></div>
-      <div class="auth-mesh-circle mesh-2"></div>
+  <div class="auth-split-wrapper">
+    <!-- Brand Pane (River Teal & Marigold Confluence) -->
+    <div class="auth-brand-pane" aria-hidden="true">
+      <div class="auth-brand-mesh auth-mesh-teal"></div>
+      <div class="auth-brand-mesh auth-mesh-marigold"></div>
 
-      <div style="display: flex; align-items: center; gap: 12px; z-index: 2;">
+      <!-- Brand Logo -->
+      <a href="/" style="display: flex; align-items: center; gap: 12px; text-decoration: none; z-index: 2;">
         <svg viewBox="0 0 32 32" fill="none" width="36" height="36">
-          <rect width="32" height="32" rx="9" fill="#0B0F14"/>
-          <circle cx="12" cy="16" r="6.5" stroke="#3B82F6" stroke-width="2.2" stroke-linecap="round"/>
-          <circle cx="20" cy="16" r="6.5" stroke="#60A5FA" stroke-width="2.2" stroke-linecap="round"/>
-          <path d="M12 11.5C14.5 13.5 17.5 13.5 20 11.5M12 20.5C14.5 18.5 17.5 18.5 20 20.5" stroke="#FFFFFF" stroke-width="1.8" stroke-linecap="round" opacity="0.9"/>
-          <circle cx="16" cy="16" r="1.75" fill="#60A5FA"/>
+          <rect width="32" height="32" rx="10" fill="#14110F"/>
+          <circle cx="12" cy="16" r="6.75" stroke="#0E7C86" stroke-width="2.2" stroke-linecap="round"/>
+          <circle cx="20" cy="16" r="6.75" stroke="#FFA41B" stroke-width="2.2" stroke-linecap="round"/>
+          <path d="M12 11.5C14.2 13.8 17.8 13.8 20 11.5M12 20.5C14.2 18.2 17.8 18.2 20 20.5" stroke="#FFFFFF" stroke-width="1.6" stroke-linecap="round" opacity="0.95"/>
+          <circle cx="16" cy="16" r="2" fill="#FFA41B"/>
         </svg>
-        <span style="font-family: var(--font-heading); font-size: 1.5rem; font-weight: 800;">Sangam</span>
-      </div>
+        <span style="font-family: var(--font-display); font-size: 1.5rem; font-weight: 800; color: var(--text-main);">Sangam</span>
+      </a>
 
-      <div class="floating-cards-wrap">
-        <div class="floating-mock-card float-1">
+      <!-- Drifting Mock Cards -->
+      <div style="z-index: 2; margin: auto 0; display: flex; flex-direction: column; gap: var(--space-4);">
+        <div class="auth-float-card spotlight-card" style="animation: floatGentle 9s ease-in-out infinite alternate;">
           <div style="display: flex; align-items: center; gap: 10px; margin-bottom: 8px;">
-            <div style="width: 32px; height: 32px; border-radius: 50%; background: linear-gradient(135deg, #10b981, #047857); display: flex; align-items: center; justify-content: center; font-size: 0.75rem; font-weight: bold;">AN</div>
+            <div style="width: 32px; height: 32px; border-radius: 50%; background: var(--teal-500); display: flex; align-items: center; justify-content: center; color: #fff; font-weight: 700; font-size: 0.78rem;">RG</div>
             <div>
-              <div style="font-weight: 700; font-size: 0.85rem;">Arjun Nair</div>
-              <div style="font-size: 0.7rem; color: #94a3b8;">@arjun_tech</div>
+              <div style="font-weight: 700; font-size: 0.88rem; color: var(--text-main);">Rohan Gupta</div>
+              <div style="font-size: 0.72rem; color: var(--text-muted);">@rohan_tech</div>
             </div>
           </div>
-          <p style="font-size: 0.82rem; color: #e2e8f0; margin: 0; line-height: 1.4;">
-            Ship fast, keep it modular, and focus on customer delight. Welcome to Sangam!
+          <p style="font-size: 0.84rem; line-height: 1.45; color: var(--text-secondary); margin: 0;">
+            Building climate-tech in Bengaluru. The discussions here are thoughtful and signal-dense. #startups
           </p>
         </div>
 
-        <div class="floating-mock-card float-2">
+        <div class="auth-float-card spotlight-card" style="animation: floatGentle 11s ease-in-out infinite alternate-reverse; margin-left: 36px;">
           <div style="display: flex; align-items: center; gap: 10px; margin-bottom: 8px;">
-            <div style="width: 32px; height: 32px; border-radius: 50%; background: linear-gradient(135deg, #f59e0b, #b45309); display: flex; align-items: center; justify-content: center; font-size: 0.75rem; font-weight: bold;">AI</div>
+            <div style="width: 32px; height: 32px; border-radius: 50%; background: var(--marigold-400); display: flex; align-items: center; justify-content: center; color: #14110F; font-weight: 700; font-size: 0.78rem;">PN</div>
             <div>
-              <div style="font-weight: 700; font-size: 0.85rem;">Ananya Iyer</div>
-              <div style="font-size: 0.7rem; color: #94a3b8;">@ananyaiyer</div>
+              <div style="font-weight: 700; font-size: 0.88rem; color: var(--text-main);">Priya Nair</div>
+              <div style="font-size: 0.72rem; color: var(--text-muted);">@priyanair</div>
             </div>
           </div>
-          <p style="font-size: 0.82rem; color: #e2e8f0; margin: 0; line-height: 1.4;">
-            Edge computing and local LLMs are shaping the future. Exciting discussions here!
+          <p style="font-size: 0.84rem; line-height: 1.45; color: var(--text-secondary); margin: 0;">
+            Marine Drive sunrise and thoughtful conversations. Welcome to the confluence! 🌅
           </p>
         </div>
       </div>
 
+      <!-- Quote -->
       <div style="z-index: 2;">
-        <h2 style="font-size: var(--text-2xl); font-weight: 800; color: #ffffff; margin-bottom: 8px;">
-          Join the conversation.
+        <h2 style="font-family: var(--font-display); font-size: clamp(1.6rem, 2.8vw, 2.2rem); font-weight: 800; line-height: 1.15; margin-bottom: 8px; color: var(--text-main);">
+          Your voice matters here.
         </h2>
-        <p style="color: #94a3b8; font-size: 0.95rem; max-width: 440px; margin: 0;">
-          Create your profile, share insights, bookmark discussions, and expand your network.
+        <p style="color: var(--text-secondary); font-size: 0.92rem; max-width: 440px; margin: 0; line-height: 1.5;">
+          Join a growing community of developers, writers, and explorers sharing genuine insights.
         </p>
       </div>
     </div>
 
-    <!-- Register Form -->
-    <div class="auth-form-side">
-      <div class="auth-form-container">
-        <a href="/" style="display: inline-flex; align-items: center; gap: 8px; margin-bottom: var(--space-6); text-decoration: none;">
-          <svg viewBox="0 0 32 32" fill="none" width="32" height="32">
-            <rect width="32" height="32" rx="8" fill="#0B0F14"/>
-            <circle cx="12" cy="16" r="6" stroke="#3B82F6" stroke-width="2.2" stroke-linecap="round"/>
-            <circle cx="20" cy="16" r="6" stroke="#60A5FA" stroke-width="2.2" stroke-linecap="round"/>
-            <circle cx="16" cy="16" r="1.75" fill="#60A5FA"/>
-          </svg>
-          <span style="font-family: var(--font-heading); font-size: 1.35rem; font-weight: 800; color: var(--text-main);">Sangam</span>
-        </a>
+    <!-- Register Form Pane -->
+    <div class="auth-form-pane">
+      <div class="auth-form-box">
+        <div style="margin-bottom: var(--space-5);">
+          <h1 style="font-family: var(--font-display); font-size: 1.8rem; font-weight: 800; margin: 0 0 6px 0; color: var(--text-main);">
+            Create your account
+          </h1>
+          <p style="color: var(--text-muted); font-size: 0.88rem; margin: 0;">
+            Become part of the Sangam creator community today.
+          </p>
+        </div>
 
-        <h1 style="font-size: var(--text-2xl); margin-bottom: var(--space-2);">Create your account</h1>
-        <p style="color: var(--text-secondary); margin-bottom: var(--space-5); font-size: var(--text-sm);">
-          Start connecting with people on Sangam today.
-        </p>
-
-        <form id="register-form">
-          <div class="form-group">
-            <label class="form-label" for="reg-name">Full Name</label>
-            <input type="text" id="reg-name" class="form-input" placeholder="e.g. Rahul Sharma" autocomplete="name" required>
-            <div class="form-error-msg" id="reg-err-name"></div>
+        <form id="register-form" style="display: flex; flex-direction: column; gap: var(--space-4);">
+          <div>
+            <label class="form-label" for="reg-name" style="display: block; font-size: 0.82rem; font-weight: 700; color: var(--text-muted); margin-bottom: 6px;">Full Name</label>
+            <input type="text" id="reg-name" class="form-input" placeholder="e.g. Rahul Sharma" autocomplete="name" required style="width: 100%; padding: 10px 14px; border-radius: var(--radius-md); border: 1px solid var(--hairline-strong); background: var(--bg-surface-2); color: var(--text-main); font-size: 0.92rem;">
+            <div class="form-error-msg" id="reg-err-name" style="color: var(--coral-500); font-size: 0.75rem; margin-top: 4px;"></div>
           </div>
 
-          <div class="form-group">
-            <label class="form-label" for="reg-username">Username</label>
-            <input type="text" id="reg-username" class="form-input" placeholder="e.g. rahul_sharma" autocomplete="username" required>
-            <div class="form-error-msg" id="reg-err-username"></div>
+          <div>
+            <label class="form-label" for="reg-username" style="display: block; font-size: 0.82rem; font-weight: 700; color: var(--text-muted); margin-bottom: 6px;">Username</label>
+            <input type="text" id="reg-username" class="form-input" placeholder="e.g. rahul_sharma" autocomplete="username" required style="width: 100%; padding: 10px 14px; border-radius: var(--radius-md); border: 1px solid var(--hairline-strong); background: var(--bg-surface-2); color: var(--text-main); font-size: 0.92rem;">
+            <div class="form-error-msg" id="reg-err-username" style="color: var(--coral-500); font-size: 0.75rem; margin-top: 4px;"></div>
           </div>
 
-          <div class="form-group">
-            <label class="form-label" for="reg-email">Email Address</label>
-            <input type="email" id="reg-email" class="form-input" placeholder="e.g. rahul@example.com" autocomplete="email" required>
-            <div class="form-error-msg" id="reg-err-email"></div>
+          <div>
+            <label class="form-label" for="reg-email" style="display: block; font-size: 0.82rem; font-weight: 700; color: var(--text-muted); margin-bottom: 6px;">Email Address</label>
+            <input type="email" id="reg-email" class="form-input" placeholder="e.g. rahul@example.com" autocomplete="email" required style="width: 100%; padding: 10px 14px; border-radius: var(--radius-md); border: 1px solid var(--hairline-strong); background: var(--bg-surface-2); color: var(--text-main); font-size: 0.92rem;">
+            <div class="form-error-msg" id="reg-err-email" style="color: var(--coral-500); font-size: 0.75rem; margin-top: 4px;"></div>
           </div>
 
-          <div class="form-group" style="position: relative;">
-            <label class="form-label" for="reg-password">Password (min 6 characters)</label>
-            <input type="password" id="reg-password" class="form-input" placeholder="••••••••" autocomplete="new-password" required>
-            <button type="button" class="password-toggle-btn" id="reg-pw-toggle" aria-label="Show or hide password">
-              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" width="20" height="20" id="reg-eye-icon"><path d="M2 12s3-7 10-7 10 7 10 7-3 7-10 7-10-7-10-7Z"/><circle cx="12" cy="12" r="3"/></svg>
-            </button>
-            <div class="strength-meter-bar">
-              <div class="strength-meter-fill" id="strength-fill"></div>
+          <div style="position: relative;">
+            <label class="form-label" for="reg-password" style="display: block; font-size: 0.82rem; font-weight: 700; color: var(--text-muted); margin-bottom: 6px;">Password (min 6 chars)</label>
+            <div style="position: relative;">
+              <input type="password" id="reg-password" class="form-input" placeholder="••••••••" autocomplete="new-password" required style="width: 100%; padding: 10px 42px 10px 14px; border-radius: var(--radius-md); border: 1px solid var(--hairline-strong); background: var(--bg-surface-2); color: var(--text-main); font-size: 0.92rem;">
+              <button type="button" class="btn-icon" id="reg-pw-toggle" aria-label="Toggle password visibility" style="position: absolute; right: 4px; top: 50%; transform: translateY(-50%); width: 32px; height: 32px;">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" width="18" height="18" id="reg-eye-icon"><path d="M2 12s3-7 10-7 10 7 10 7-3 7-10 7-10-7-10-7Z"/><circle cx="12" cy="12" r="3"/></svg>
+              </button>
+            </div>
+
+            <!-- Password Strength Meter Track -->
+            <div class="strength-bar-track">
+              <div class="strength-bar-fill" id="strength-fill"></div>
             </div>
             <div style="display: flex; justify-content: space-between; align-items: center; margin-top: 4px;">
-              <div class="form-error-msg" id="reg-err-password" style="margin: 0;"></div>
+              <div class="form-error-msg" id="reg-err-password" style="color: var(--coral-500); font-size: 0.75rem; margin: 0;"></div>
               <span id="strength-label" style="font-size: 0.72rem; color: var(--text-muted);"></span>
             </div>
           </div>
 
-          <div id="reg-general-error" style="color: var(--red-500); font-size: var(--text-sm); margin-bottom: 14px; display: none;"></div>
+          <div id="reg-general-error" style="color: var(--coral-500); font-size: 0.85rem; display: none;"></div>
 
-          <button type="submit" class="btn btn-primary" id="reg-submit-btn" style="width: 100%; margin-top: 8px;">
-            Create Account
+          <button type="submit" class="btn btn-primary" id="reg-submit-btn" style="width: 100%; margin-top: 6px;">
+            <span>Create Account</span>
           </button>
         </form>
 
-        <p style="text-align: center; margin-top: var(--space-6); font-size: var(--text-sm); color: var(--text-secondary);">
-          Already have an account? <a href="/login" style="font-weight: 600;">Log in</a>
+        <p style="text-align: center; margin-top: var(--space-5); font-size: 0.88rem; color: var(--text-muted);">
+          Already have an account? <a href="/login" style="font-weight: 700; color: var(--accent-primary); text-decoration: none;">Sign in</a>
         </p>
       </div>
     </div>

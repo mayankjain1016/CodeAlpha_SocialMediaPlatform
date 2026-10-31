@@ -114,10 +114,10 @@ export const openGuestModal = (actionName = 'perform this action') => {
           <button class="btn-icon modal-close-btn" aria-label="Close dialog">${icons.x()}</button>
         </div>
         <div class="modal-body" style="text-align: center; padding: var(--space-6) var(--space-4);">
-          <div style="width: 56px; height: 56px; margin: 0 auto var(--space-4); border-radius: var(--radius-full); background: var(--primary-light); color: var(--primary); display: flex; align-items: center; justify-content: center;">
+          <div style="width: 56px; height: 56px; margin: 0 auto var(--space-4); border-radius: var(--radius-full); background: rgba(14, 124, 134, 0.12); color: var(--accent-primary); display: flex; align-items: center; justify-content: center;">
             ${icons.sparkles('nav-icon')}
           </div>
-          <h4 style="font-size: var(--text-lg); margin-bottom: var(--space-2);">Connect, share and discover</h4>
+          <h4 style="font-family: var(--font-display); font-size: 1.25rem; font-weight: 800; margin-bottom: var(--space-2);">Connect, share and discover</h4>
           <p id="guest-action-hint" style="color: var(--text-secondary); max-width: 340px; margin: 0 auto var(--space-6);">Create an account or log in to ${actionName}.</p>
           <div style="display: flex; flex-direction: column; gap: var(--space-3); max-width: 280px; margin: 0 auto;">
             <a href="/login" class="btn btn-primary" style="width: 100%;">Log In</a>
