@@ -105,6 +105,15 @@ Open **`http://localhost:5000`** in your browser to experience the 2026 social a
 
 ---
 
+## ⚡ Performance, Caching & Deploy Cache-Busting
+
+- **Conditional ETag Revalidation (`no-cache`)**: All CSS and JavaScript files are served with `Cache-Control: no-cache` and strict ETags. Browsers conditionally revalidate on page refresh, guaranteeing that code changes and style updates propagate immediately without requiring client-side hard refreshes.
+- **Dynamic Deploy Versioning (`?v=<build>`)**: The server injects a dynamic build version query string (`?v=<build>`) into all CSS and JS asset tags when serving HTML. Every new server start or deployment busts browser caches automatically across all pages.
+- **Long-Lived Immutable Media Caching**: Curated seed photos (`/assets/images`) and uploaded user media (`/api/media/:id`) use `Cache-Control: public, max-age=31536000, immutable` for peak CDN and browser cache efficiency.
+- **Minimal Clean Auth Experience**: Dedicated `/login` and `/register` flows featuring 1-click Quick Demo login, ambient animated sunrise blobs, password visibility toggles, inline field errors, and loading states without header clutter.
+
+---
+
 ## 🎨 Theme & Responsiveness
 
 - **Themes**: Seamless Light mode (`#FAFAFA` neutral surface) and Midnight OLED Dark mode (`#0B0B0F`) with flash-free initialization.
