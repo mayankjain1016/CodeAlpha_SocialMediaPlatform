@@ -1,4 +1,5 @@
 const path = require('path');
+const fs = require('fs');
 const express = require('express');
 const helmet = require('helmet');
 const compression = require('compression');
@@ -60,18 +61,55 @@ if (!env.isProduction && env.NODE_ENV !== 'test') {
 app.use(express.json({ limit: '100kb' }));
 app.use(express.urlencoded({ extended: true, limit: '100kb' }));
 
-// Static asset serving with long-term cache
-const staticOptions = {
-  maxAge: env.isProduction ? '1y' : 0,
-  immutable: env.isProduction,
+// Build/deploy version query string (injected at server start to bust asset cache on new deploys)
+const BUILD_VERSION = process.env.BUILD_VERSION || Date.now().toString(36);
+
+// Static asset serving cache strategies:
+// 1. CSS & JS: "no-cache" (always revalidate with ETag so updates appear immediately without stale cache)
+const revalidateStaticOptions = {
+  maxAge: 0,
+  etag: true,
+  lastModified: true,
+  setHeaders: (res) => {
+    res.set('Cache-Control', 'no-cache');
+  },
 };
 
-app.use('/css', express.static(path.join(frontendDir, 'css'), staticOptions));
-app.use('/js', express.static(path.join(frontendDir, 'js'), staticOptions));
-app.use('/assets', express.static(path.join(frontendDir, 'assets'), staticOptions));
+app.use('/css', express.static(path.join(frontendDir, 'css'), revalidateStaticOptions));
+app.use('/js', express.static(path.join(frontendDir, 'js'), revalidateStaticOptions));
+
+// 2. Seed images under /assets/images: keep long immutable caching (1 year)
+const immutableImageOptions = {
+  maxAge: '1y',
+  immutable: true,
+  etag: true,
+  lastModified: true,
+  setHeaders: (res) => {
+    res.set('Cache-Control', 'public, max-age=31536000, immutable');
+  },
+};
+app.use('/assets/images', express.static(path.join(frontendDir, 'assets', 'images'), immutableImageOptions));
+
+// 3. General static assets under /assets: revalidate with no-cache (fallback for images retains immutable)
+app.use(
+  '/assets',
+  express.static(path.join(frontendDir, 'assets'), {
+    maxAge: 0,
+    etag: true,
+    lastModified: true,
+    setHeaders: (res, filePath) => {
+      if (filePath.includes(path.sep + 'images' + path.sep)) {
+        res.set('Cache-Control', 'public, max-age=31536000, immutable');
+      } else {
+        res.set('Cache-Control', 'no-cache');
+      }
+    },
+  })
+);
 
 // Favicon shortcut
 app.get('/favicon.svg', (req, res) => {
+  res.set('Cache-Control', 'no-cache');
   res.sendFile(path.join(frontendDir, 'assets', 'favicon.svg'));
 });
 
@@ -85,12 +123,26 @@ app.use('/api/trending', trendingRoutes);
 app.use('/api/media', mediaRoutes);
 app.use('/api/stories', storyRoutes);
 
-// Helper to send HTML pages with no-cache headers
+// Helper to send HTML pages with injected cache-busting version on CSS/JS includes and no-cache headers
 const sendPage = (res, pageName, statusCode = 200) => {
-  res.set('Cache-Control', 'no-cache, no-store, must-revalidate');
-  res.set('Pragma', 'no-cache');
-  res.set('Expires', '0');
-  res.status(statusCode).sendFile(path.join(pagesDir, pageName));
+  const filePath = path.join(pagesDir, pageName);
+  fs.readFile(filePath, 'utf8', (err, html) => {
+    if (err) {
+      return res.status(500).send('Error loading page');
+    }
+
+    // Inject cache-busting query string ?v=<version> to every /css and /js include
+    const versionedHtml = html.replace(
+      /((?:href|src)=["'])(\/(?:css|js)\/[^"'?>]+)(\?[^"']*)?(["'])/g,
+      (match, attr, assetPath, existingQuery, quote) => `${attr}${assetPath}?v=${BUILD_VERSION}${quote}`
+    );
+
+    res.set('Content-Type', 'text/html; charset=utf-8');
+    res.set('Cache-Control', 'no-cache, no-store, must-revalidate');
+    res.set('Pragma', 'no-cache');
+    res.set('Expires', '0');
+    res.status(statusCode).send(versionedHtml);
+  });
 };
 
 // Clean URLs
