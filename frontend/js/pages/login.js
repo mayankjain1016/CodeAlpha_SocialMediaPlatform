@@ -17,7 +17,6 @@ const form = document.getElementById('login-form');
 const emailInput = document.getElementById('login-email') || document.getElementById('login-identifier');
 const passwordInput = document.getElementById('login-password');
 const submitBtn = document.getElementById('login-submit-btn');
-const demoChip = document.getElementById('demo-fill-chip');
 const pwToggleBtn = document.getElementById('login-password-toggle');
 
 const emailError = document.getElementById('login-email-error');
@@ -142,24 +141,6 @@ const performLogin = async (login, password) => {
     }
   }
 };
-
-// 1-Click Demo Fill & Submit
-if (demoChip && emailInput && passwordInput) {
-  const handleAutoFill = (e) => {
-    e.preventDefault();
-    clearErrors();
-    emailInput.value = 'demo@sangam.in';
-    passwordInput.value = 'Demo@123';
-    performLogin('demo@sangam.in', 'Demo@123');
-  };
-
-  demoChip.addEventListener('click', handleAutoFill);
-  demoChip.addEventListener('keydown', (e) => {
-    if (e.key === 'Enter' || e.key === ' ') {
-      handleAutoFill(e);
-    }
-  });
-}
 
 // Form submit event
 if (form) {

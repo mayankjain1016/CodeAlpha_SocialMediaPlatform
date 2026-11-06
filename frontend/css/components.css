@@ -1741,78 +1741,6 @@
   animation: fadeIn 0.2s ease;
 }
 
-/* Quick Demo Credentials Chip */
-.demo-credentials-chip {
-  background: var(--grad-sunrise-soft);
-  border: 1px solid rgba(255, 90, 54, 0.28);
-  border-radius: var(--rad-full);
-  padding: 5px 6px 5px 12px;
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  gap: 8px;
-  font-size: var(--text-xs);
-  color: var(--text-main);
-  cursor: pointer;
-  transition: all var(--dur-fast) ease;
-  user-select: none;
-}
-
-.demo-credentials-chip:hover {
-  border-color: var(--primary);
-  background: rgba(255, 90, 54, 0.16);
-  transform: translateY(-1px);
-}
-
-.demo-chip-content {
-  display: flex;
-  align-items: center;
-  gap: 8px;
-  min-width: 0;
-  overflow: hidden;
-}
-
-.demo-chip-badge {
-  background: var(--primary);
-  color: #FFFFFF;
-  font-weight: 700;
-  font-size: 10px;
-  padding: 2px 7px;
-  border-radius: var(--rad-full);
-  text-transform: uppercase;
-  letter-spacing: 0.04em;
-  flex-shrink: 0;
-}
-
-.demo-chip-text {
-  color: var(--text-secondary);
-  font-size: 11.5px;
-  font-family: var(--font-mono);
-  overflow: hidden;
-  text-overflow: ellipsis;
-  white-space: nowrap;
-}
-
-.demo-chip-btn {
-  background: var(--primary);
-  color: #FFFFFF;
-  border: none;
-  border-radius: var(--rad-full);
-  padding: 4px 10px;
-  font-size: 11px;
-  font-weight: 700;
-  display: flex;
-  align-items: center;
-  gap: 4px;
-  cursor: pointer;
-  flex-shrink: 0;
-  transition: background var(--dur-fast), transform var(--dur-fast);
-}
-
-.demo-chip-btn:hover {
-  background: var(--primary-hover);
-}
-
 /* Input With Action Button (Password Toggle) */
 .input-with-action {
   position: relative;
@@ -1938,9 +1866,6 @@
   }
   .auth-title {
     font-size: var(--text-xl);
-  }
-  .demo-credentials-chip {
-    padding: 5px 6px 5px 10px;
   }
 }
 
