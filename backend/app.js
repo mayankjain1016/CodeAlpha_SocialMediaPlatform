@@ -61,8 +61,8 @@ if (!env.isProduction && env.NODE_ENV !== 'test') {
 app.use(express.json({ limit: '100kb' }));
 app.use(express.urlencoded({ extended: true, limit: '100kb' }));
 
-// Build/deploy version query string (injected at server start to bust asset cache on new deploys)
-const BUILD_VERSION = process.env.BUILD_VERSION || Date.now().toString(36);
+// Timestamp generated at server start for cache-busting (?v=<timestamp>)
+const BUILD_VERSION = Date.now();
 
 // Static asset serving cache strategies:
 // 1. CSS & JS: "no-cache" (always revalidate with ETag so updates appear immediately without stale cache)
@@ -123,15 +123,15 @@ app.use('/api/trending', trendingRoutes);
 app.use('/api/media', mediaRoutes);
 app.use('/api/stories', storyRoutes);
 
-// Helper to send HTML pages with injected cache-busting version on CSS/JS includes and no-cache headers
-const sendPage = (res, pageName, statusCode = 200) => {
+// Middleware to serve HTML pages with injected cache-busting timestamp on CSS/JS includes and no-cache headers
+const servePage = (pageName, statusCode = 200) => (req, res) => {
   const filePath = path.join(pagesDir, pageName);
   fs.readFile(filePath, 'utf8', (err, html) => {
     if (err) {
       return res.status(500).send('Error loading page');
     }
 
-    // Inject cache-busting query string ?v=<version> to every /css and /js include
+    // Inject cache-busting query string ?v=<timestamp> to every /css and /js include
     const versionedHtml = html.replace(
       /((?:href|src)=["'])(\/(?:css|js)\/[^"'?>]+)(\?[^"']*)?(["'])/g,
       (match, attr, assetPath, existingQuery, quote) => `${attr}${assetPath}?v=${BUILD_VERSION}${quote}`
@@ -146,14 +146,14 @@ const sendPage = (res, pageName, statusCode = 200) => {
 };
 
 // Clean URLs
-app.get('/', (req, res) => sendPage(res, 'index.html'));
-app.get('/explore', (req, res) => sendPage(res, 'explore.html'));
-app.get('/notifications', (req, res) => sendPage(res, 'notifications.html'));
-app.get('/bookmarks', (req, res) => sendPage(res, 'bookmarks.html'));
-app.get('/login', (req, res) => sendPage(res, 'login.html'));
-app.get('/register', (req, res) => sendPage(res, 'register.html'));
-app.get('/u/:username', (req, res) => sendPage(res, 'profile.html'));
-app.get('/post/:id', (req, res) => sendPage(res, 'post.html'));
+app.get('/', servePage('index.html'));
+app.get('/explore', servePage('explore.html'));
+app.get('/notifications', servePage('notifications.html'));
+app.get('/bookmarks', servePage('bookmarks.html'));
+app.get('/login', servePage('login.html'));
+app.get('/register', servePage('register.html'));
+app.get('/u/:username', servePage('profile.html'));
+app.get('/post/:id', servePage('post.html'));
 
 // 404 handler for API routes
 app.all('/api/*', (req, res) => {
@@ -162,7 +162,7 @@ app.all('/api/*', (req, res) => {
 
 // 404 handler for all other routes
 app.use((req, res) => {
-  sendPage(res, '404.html', 404);
+  servePage('404.html', 404)(req, res);
 });
 
 // Central Error Handler
